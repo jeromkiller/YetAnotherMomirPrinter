@@ -1,6 +1,3 @@
-import sys
-print(sys.path)
-
 import unittest
 import json
 from src.MomirVig import MtgCard
