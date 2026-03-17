@@ -1,15 +1,16 @@
-import GenNoise
+from . import GenNoise
 import os
 
+from PIL import ImageFile
 import matplotlib.image as img
 import numpy as np
 import math
 
-def DitherImage(imageRaw, ditherTexturePath="noise.png"):
+def DitherImage(imageRaw: ImageFile.ImageFile, ditherTexturePath="noise.png"):
     if not os.path.exists(ditherTexturePath):
         GenNoise.generateNoise(100, 100, path=ditherTexturePath)
     noise = img.imread(ditherTexturePath)
-    image = imageRaw.copy()
+    image = np.array(imageRaw)
 
     if np.max(image) > 1:
         # assume this is not a png
@@ -27,7 +28,29 @@ def DitherImage(imageRaw, ditherTexturePath="noise.png"):
     
     return dithered
 
+def toPrintString(image: np.ndarray):
+    test = np.array([[1, 4, 7, 10],
+                     [2, 5, 8, 11],
+                     [3, 6, 9, 12],
+                     [13, 15, 17, 19],
+                     [14, 16, 18, 20]])
+    test = test % 3 == 0
+    flattened = np.array([])
+    for i in range(math.ceil(test.shape[0] / 3)):
+        sliceStart = i * 3
+        sliceStop = sliceStart + 3
+        flatRow = test[:][sliceStart:sliceStop].flatten('F')
+        flattened = np.append(flattened, flatRow)
+    flattened = flattened.astype(int)
+    print(flattened)
+    packed = np.packbits(flattened)
+    print(packed)
+
+
 if __name__ == "__main__":
+    toPrintString(np.array([]))
+    exit()
+
     image_path = "example.jpg"
     image = img.imread(image_path)
 
