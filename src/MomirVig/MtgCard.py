@@ -20,6 +20,7 @@ class CardFace():
         self.cost: str = face.get("mana_cost", "")
         self.identity: str = "".join(map(str, face.get("colors", [])))
         self.image_url: str = face["image_uris"]["art_crop"]
+        self.image_credit: str = face.get("artist", "")
         self.type: str = face.get("type_line", "")
 
         self.oracle = list[str]()
@@ -30,6 +31,20 @@ class CardFace():
         elif self.layout == "saga":
             self.oracle = [line for line in json["oracle_text"].split("\n")]
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
+        elif self.layout == "leveler":
+            oracle_parts = face["oracle_text"].split("\n")
+            self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
+            oracle_string = ""
+            for index, part in enumerate(oracle_parts):
+                if index % 3 == 2:
+                    self.stats.append(part)
+                    continue
+                if oracle_string != "":
+                    oracle_string += "\n"
+                oracle_string += part
+                if index % 3 == 0:
+                    self.oracle.append(oracle_string)
+                    oracle_string = ""
         else:
             self.oracle = [face.get("oracle_text", "")]
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
