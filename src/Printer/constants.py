@@ -1,0 +1,20 @@
+INITIALIZE = "\x1b\x40"
+
+SET_JUSTIFICATION   = "\x1B\x61"
+JUSTIFY_LEFT        = SET_JUSTIFICATION + "\x00"
+JUSTIFY_CENTER      = SET_JUSTIFICATION + "\x01"
+JUSTIFY_RIGHT       = SET_JUSTIFICATION + "\x02"
+
+RESET_PRINT_MODE    = "\x1b\x21\x00"
+BOLT_OFF            = "\x1b\x45\x00"
+BOLD_ON             = "\x1b\x45\x01"
+UNDERLINE_OFF       = "\x1b\x2d\x00"
+UNDERLINE_ONE       = "\x1b\x2d\x01"
+UNDERLINE_TWO       = "\x1b\x2d\x02"
+FONT_A              = "\x1B\x4d\x00"
+FONT_B              = "\x1B\x4d\x01"
+
+CUT_FULL            = "\x1D\x56\x00"
+CUT_PARTIAL         = "\x1D\x56\x31"
+FEED_AND_CUT_FULL   = "\x1D\x56\x41\x10"
+FEED_AND_CUT_PARTIAL= "\x1D\x56\x42\x10"
