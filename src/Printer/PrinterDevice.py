@@ -57,6 +57,10 @@ class Printer():
             self._write("----------".center(self.max_text_with))
             self.writeLine()
 
+        # type line
+        self.writeLine(card.face.type)
+        self.writeLine()
+
         # oracle text
         self.writeLine(card.face.oracle[0])
 

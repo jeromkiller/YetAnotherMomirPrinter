@@ -44,6 +44,7 @@ class UsbPrinter(PrinterDevice.Printer):
             self._write(INITIALIZE)
 
     def _write(self, data: str):
+        data = data.replace("—", "-")
         self.device.write(out_ep, data)
 
     def _cut(self):
