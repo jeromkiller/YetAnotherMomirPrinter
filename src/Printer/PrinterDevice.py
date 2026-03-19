@@ -39,6 +39,8 @@ class Printer():
         else:
             print("not implemented")
             pass
+
+        self.cut()
     
     def _print_normal_card(self, card: MagicCard):
         # card title
@@ -90,32 +92,33 @@ class Printer():
         if text_width < 0:
             text_width = self.max_text_with
 
+        # if there is a linebreak in the line, only parse the stuff left from it
+        if "\n" in line:
+            pre_break, partition, post_break = line.partition("\n")
+            broken, remainder = self.breakLine(pre_break, text_width)
+            if remainder:
+                remainder += partition
+            return broken, remainder + post_break
+
         if len(line) <= text_width:
             return line, ""
         
-        new_line: str = ""
-        remainder: str = ""
+        # check if we can break exactly at the end of line
+        if line[text_width] == " ":
+            return line[:text_width], line[text_width + 1:]
 
-        # break line on spaces
-        for word in line.split(" "):
-            # break long words
-            if len(word) > text_width:
-                if len(new_line):
-                    break
-                new_line = word[:text_width - 1]
-                new_line += "-"
-                return new_line, line[len(new_line) - 1:]
+        # only parse the part that's relevant to us
+        check_line = line[:text_width]
 
-            if len(word) + len(new_line) + 1 > text_width:
-                break
+        # remove the last word from the back
+        trimmed, _, remainder = check_line.rpartition(" ")
 
-            if len(new_line) > 0:
-                new_line += " "
+        if trimmed == '':
+            # couldn't break on a space
+            # break the word instead
+            return remainder[:-1] + "-", line[len(remainder) - 1:]
 
-            new_line += word
-
-        remainder = line[len(new_line) + 1:]
-        return new_line, remainder
+        return trimmed, line[len(trimmed) + 1:]
 
 
     def breakText(self, text: str, text_width: int = -1) -> list[str]:
@@ -126,10 +129,10 @@ class Printer():
             return [text]
         
         lines = list[str]()
-        broken_line, remainder = self.breakLine(text)
+        broken_line, remainder = self.breakLine(text, text_width)
         lines.append(broken_line)
         while len(remainder):
-            broken_line, remainder = self.breakLine(remainder)
+            broken_line, remainder = self.breakLine(remainder, text_width)
             lines.append(broken_line)
         return lines
 
