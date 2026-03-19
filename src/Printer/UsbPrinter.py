@@ -41,7 +41,7 @@ class UsbPrinter(PrinterDevice.Printer):
             except usb.core.USBError as e:
                     print("Could not reset device: %s", str(e))
             
-            self._write(INITIALIZE)
+            self._reset()
 
     def _write(self, data: str):
         data = data.replace("—", "-")
@@ -51,3 +51,13 @@ class UsbPrinter(PrinterDevice.Printer):
         #self._write(FEED_AND_CUT_PARTIAL) # doesn't work??
         self._write("\n\n\n\n\n\n")
         self._write(CUT_PARTIAL)
+
+    def _image(self, image):
+        self._write("----------".center(self.max_text_with))
+        self._write("\n\n\n")
+        self._write("images not implemented".center(self.max_text_with))
+        self._write("\n\n\n")
+        self._write("----------".center(self.max_text_with))
+
+    def _reset(self):
+        self._write(INITIALIZE)    
