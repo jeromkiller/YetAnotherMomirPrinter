@@ -1,6 +1,7 @@
 import usb.core
 import usb.util
 from . import PrinterDevice
+from .TextDecorators import Decoration
 from .constants import *
 from ..MomirVig import ProcessImage 
 from PIL.ImageFile import ImageFile
@@ -49,8 +50,9 @@ class UsbPrinter(PrinterDevice.Printer):
     def _write(self, data: bytes):
         self.device.write(out_ep, data, 0)
 
-    def _text(self, text: str):
+    def _text(self, text: str, decoration: Decoration | None = None):
         data = text.replace("—", "-")
+        self.set_decoration(decoration)
         self._write(data)
 
     def _cut(self):
@@ -118,3 +120,18 @@ class UsbPrinter(PrinterDevice.Printer):
 
     def _reset(self):
         self._write(INITIALIZE)    
+
+    def set_decoration(self, decoration: Decoration | None = None):
+        if decoration is None:
+            self._write(SELECT_PRINT_MODE + b"\x00")
+            return
+        
+        flags = 0
+        if Decoration.BOLD in decoration:
+            flags |= 1 << 3
+        if Decoration.UNDERLINE in decoration:
+            flags |= 1 << 7
+        self._write(SELECT_PRINT_MODE + flags.to_bytes())
+
+
+        

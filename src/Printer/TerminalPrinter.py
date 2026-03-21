@@ -1,4 +1,5 @@
 from . import PrinterDevice
+from .TextDecorators import Decoration
 
 class TerminalPrinter(PrinterDevice.Printer):
     def __init__(self, width: int = 42):
@@ -7,8 +8,9 @@ class TerminalPrinter(PrinterDevice.Printer):
     def _write(self, data):
         print(data, end="")
 
-    def _text(self, text: str):
-        self._write(text)
+    def _text(self, text: str, decoration: Decoration | None = None):
+        self.print_decoration(decoration)
+        print(text, end="")
 
     def _cut(self):
         self._text("\n--------- cutline ---------\n")
@@ -23,3 +25,19 @@ class TerminalPrinter(PrinterDevice.Printer):
 
     def _reset(self):
         self._text("\n\033[0m")
+
+    def print_decoration(self, decoration: Decoration | None = None):
+        if decoration is None:
+            print("\u001b[22m", end="")
+            print("\u001b[24m", end="")
+            return
+
+        if Decoration.BOLD in decoration:
+            print("\u001b[1m", end="")
+        else:
+            print("\u001b[22m", end="")
+        
+        if Decoration.UNDERLINE in decoration:
+            print("\u001b[4m", end="")
+        else:
+            print("\u001b[24m", end="")

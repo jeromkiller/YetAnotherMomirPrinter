@@ -13,6 +13,7 @@ UNDERLINE_ONE       = b"\x1b\x2d\x01"
 UNDERLINE_TWO       = b"\x1b\x2d\x02"
 FONT_A              = b"\x1B\x4d\x00"
 FONT_B              = b"\x1B\x4d\x01"
+SELECT_PRINT_MODE   = b"\x1b\x21"
 
 RESET_LINE_SPACING  = b"\x1b\x32"
 EDIT_LINE_SPACING   = b"\x1b\x33"

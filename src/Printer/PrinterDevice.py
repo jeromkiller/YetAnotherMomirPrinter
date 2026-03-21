@@ -1,5 +1,6 @@
 from ..MomirVig.MtgCard import MagicCard
 from PIL.ImageFile import ImageFile
+from .TextDecorators import Decoration
 
 LEFT = 0
 CENTER = 1
@@ -12,7 +13,7 @@ class Printer():
     def _write(self, data: bytes):
         pass
 
-    def _text(self, text: str):
+    def _text(self, text: str, decoration: Decoration | None = None):
         pass
 
     def _image(self, image: ImageFile):
@@ -30,12 +31,12 @@ class Printer():
     def cut(self):
         self._cut()
 
-    def writeLine(self, text: str | None = None):
+    def writeLine(self, text: str | None = None, decoration: Decoration | None = None):
         if text is None:
             text = ""
         
         for line in self.breakText(text):
-            self._text(line)
+            self._text(line, decoration)
             self._text("\n")
 
     def print_card(self, card: MagicCard):
@@ -50,13 +51,13 @@ class Printer():
     
     def _print_normal_card(self, card: MagicCard):
         # card title
-        title, remainder = self.textSpan(card.face.name, card.face.cost, True)
-        self.writeLine(title)
-        self.writeLine(remainder)
+        remainder = self.textSpan(card.face.name, card.face.cost, True, Decoration.BOLD)
+        self.writeLine(remainder, Decoration.BOLD)
 
         # image
         if card.image is not None:
             self._image(card.image)
+            self.writeLine()
         else:
             self._text("----------".center(self.max_text_with))
             self._text("\n\n\n")
@@ -66,7 +67,7 @@ class Printer():
             self.writeLine()
 
         # type line
-        self.writeLine(card.face.type)
+        self.writeLine(card.face.type, Decoration.UNDERLINE)
         self.writeLine()
 
         # oracle text
@@ -74,26 +75,27 @@ class Printer():
 
         # stats & credit
         self.writeLine()
-        line, remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True)
-        self.writeLine(line)
+        remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True, right_decor=Decoration.BOLD | Decoration.UNDERLINE)
         self.writeLine(remainder)
         self.writeLine()
 
-    def textSpan(self, left_text: str, right_text: str, right_priority: bool = False) -> tuple[str, str]:
-        line: str
+    def textSpan(self, left_text: str, right_text: str, right_priority: bool = False,
+                 left_decor: Decoration | None = None, right_decor: Decoration | None = None) -> str:
         remainder: str
         if not right_priority:
             max_length = self.max_text_with - (len(left_text) + 1)
             right_part, remainder = self.breakLine(right_text, max_length)
-            spacing = self.max_text_with - len(left_text)
-            line = left_text + right_part.rjust(spacing)
+            left_part = left_text
         else:
             max_length = self.max_text_with - (len(right_text) + 1)
             left_part, remainder = self.breakLine(left_text, max_length)
-            spacing = self.max_text_with - len(left_part)
-            line = left_part + right_text.rjust(spacing)
+            right_part = right_text
 
-        return line, remainder
+        spacing = self.max_text_with - len(left_part) - len(right_part)
+        self._text(left_part, left_decor)
+        self._text(" " * spacing)
+        self._text(right_part, right_decor)
+        return remainder
 
     def breakLine(self, line: str, text_width: int = -1) -> tuple[str, str]:
         if text_width < 0:
