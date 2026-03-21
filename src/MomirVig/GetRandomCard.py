@@ -18,34 +18,41 @@ headers = {"User-Agent": "MomirTest/0.1",
 
 lastFetchTimestamp = 0.0
 
-def fetchCard(uri: str) -> MtgCard.MagicCard:
+def fetch(uri: str, visited: set[str]):
     # limit rate ourselves to 10 fetches per second
     time_stamp = time.time()
     time_delta = time_stamp - lastFetchTimestamp
     if time_delta < 0.1:
         time.sleep(0.1 - time_delta)
 
-    response = requests.get(uri, headers=headers)
+    if uri in visited:
+        return None
+    
+    print(f"fetched: {uri}")
+    visited.add(uri)
+    return requests.get(uri, headers=headers)
+
+
+def fetchCard(uri: str, visited: set[str] = set()) -> MtgCard.MagicCard:
+    response = fetch(uri, visited)
+    assert response
+
     if response.status_code != 200:
         print(f"something went wrong: {response.status_code}")
         exit()
 
-    card_json = response.json()
     print(f"fetched: {response.json().get("scryfall_uri", "")}")
+    card_json = response.json()
     card = MtgCard.MagicCard(card_json)
     card.setImage(fetchArt(card.face.image_url))
-    for part in card_json.get("all_parts", {}):
-        if part["component"] == "token":
-            token_uri = part["uri"]
-            if token_uri == uri:
-                continue
-            card.addExtraCard(fetchCard(part["uri"]))
+    card.extras = fetchExtras(card_json, visited)
 
     return card
 
 def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
     print(f"Getting random card with cost {cost}")
     return fetchCard(f"{momir_path}{cost}")
+
 
 def fetchArt(uri: str) -> ImageFile.ImageFile:
     print(f"fetcing art: {uri}")
@@ -54,3 +61,21 @@ def fetchArt(uri: str) -> ImageFile.ImageFile:
         print(f"something went wrong: {response.status_code}")
         exit()
     return Image.open(response.raw)
+
+def fetchExtras(card_json, visited: set[str]) -> list[MtgCard.MagicCard]:
+    extras = list[MtgCard.MagicCard]()
+    for part in card_json.get("all_parts", {}):
+        if part["component"] != "token":
+            continue
+
+        token_uri = part["uri"]
+        token_data = fetch(token_uri, visited)
+        if token_data is None:
+            continue
+        if token_data.status_code != 200:
+            continue
+
+        token = MtgCard.MagicCard(token_data.json())
+        token.setImage(fetchArt(token.face.image_url))
+        extras.append(token)
+    return extras
