@@ -2,11 +2,14 @@ import usb.core
 import usb.util
 from . import PrinterDevice
 from .constants import *
+from ..MomirVig import ProcessImage 
+from PIL.ImageFile import ImageFile
+import numpy as np
 
 vid = 0x04b8
 did = 0x0e02
 interface=0
-n_ep=0x82
+in_ep=0x82
 out_ep=0x01
 
 class UsbPrinter(PrinterDevice.Printer):
@@ -43,21 +46,75 @@ class UsbPrinter(PrinterDevice.Printer):
             
             self._reset()
 
-    def _write(self, data: str):
-        data = data.replace("—", "-")
-        self.device.write(out_ep, data)
+    def _write(self, data: bytes):
+        self.device.write(out_ep, data, 0)
+
+    def _text(self, text: str):
+        data = text.replace("—", "-")
+        self._write(data)
 
     def _cut(self):
         #self._write(FEED_AND_CUT_PARTIAL) # doesn't work??
-        self._write("\n\n\n\n\n\n")
-        self._write(CUT_PARTIAL)
+        self._write(b"\n\n\n\n\n\n")
+        self._write(CUT_FULL)
 
-    def _image(self, image):
-        self._write("----------".center(self.max_text_with))
-        self._write("\n\n\n")
-        self._write("images not implemented".center(self.max_text_with))
-        self._write("\n\n\n")
-        self._write("----------".center(self.max_text_with))
+    def _image(self, image: ImageFile):
+        self.buffered_image(image)
+
+
+    def _inline_image(self, image: ImageFile, justify_right: bool = False):
+        self._write(SET_IMAGE_SPACING)
+        line = self.column_image(image, max_height=24)[0]
+        data_len: int = len(line)
+        nL = int(data_len % 256)
+        nH = int(data_len / 256)
+        if justify_right:
+            pass    # todo implement
+        
+        self._write(START_BIT_IMAGE)
+        self._write(nL.to_bytes())
+        self._write(nH.to_bytes())
+        self._write(line)
+        self._write(RESET_LINE_SPACING)
+
+
+    def column_image(self, image: ImageFile, max_width: int | None = None, max_height: int | None = None) -> list[bytearray]:
+        dithered = ProcessImage.DitherImage(image, max_width, max_height, negative=True)
+        return ProcessImage.toPrintStrings(dithered, 24)
+
+
+    def buffered_image(self, image: ImageFile):
+        dithered = ProcessImage.DitherImage(image, max_width=512, negative=True)
+        
+        flatrow = dithered.flatten('C')
+        byte_data = bytearray(np.packbits(flatrow))
+
+        height = dithered.shape[0]
+        width = dithered.shape[1]
+        xL = int(width % 256)
+        xH = int(width / 256)
+        yL = int(height % 256)
+        yH = int(height / 256)
+        k = int(((xL + xH *256) + 7) /8) * (yL + yH * 256)
+        num_bytes = int((height * width) / 8) + 10
+        pL = int(num_bytes % 256)
+        pH = int(num_bytes / 256)
+
+        b = START_BUFFERED_IMAGE
+        b += pL.to_bytes()
+        b += pH.to_bytes()
+        b += b"\x30\x70"
+        b += b"\x30"  # monochrome mode
+        b += b"\x01\x01\x31"
+        b += xL.to_bytes()
+        b += xH.to_bytes()
+        b += yL.to_bytes()
+        b += yH.to_bytes()
+        b += byte_data
+        self._write(b)
+
+        # then print it
+        self._write(PRINT_BUFFERED_IMAGE)
 
     def _reset(self):
         self._write(INITIALIZE)    

@@ -9,10 +9,16 @@ class Printer():
     def __init__(self, text_width: int):
         self.max_text_with = text_width
 
-    def _write(self, data: str):
+    def _write(self, data: bytes):
+        pass
+
+    def _text(self, text: str):
         pass
 
     def _image(self, image: ImageFile):
+        pass
+
+    def _inline_image(self, image: ImageFile, justify_right: bool = False):
         pass
 
     def _cut(self):
@@ -29,8 +35,8 @@ class Printer():
             text = ""
         
         for line in self.breakText(text):
-            self._write(line)
-            self._write("\n")
+            self._text(line)
+            self._text("\n")
 
     def print_card(self, card: MagicCard):
         self._reset()
@@ -52,11 +58,11 @@ class Printer():
         if card.image is not None:
             self._image(card.image)
         else:
-            self._write("----------".center(self.max_text_with))
-            self._write("\n\n\n")
-            self._write("No Image".center(self.max_text_with))
-            self._write("\n\n\n")
-            self._write("----------".center(self.max_text_with))
+            self._text("----------".center(self.max_text_with))
+            self._text("\n\n\n")
+            self._text("No Image".center(self.max_text_with))
+            self._text("\n\n\n")
+            self._text("----------".center(self.max_text_with))
             self.writeLine()
 
         # type line
@@ -71,6 +77,7 @@ class Printer():
         line, remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True)
         self.writeLine(line)
         self.writeLine(remainder)
+        self.writeLine()
 
     def textSpan(self, left_text: str, right_text: str, right_priority: bool = False) -> tuple[str, str]:
         line: str
@@ -138,4 +145,4 @@ class Printer():
 
 
     def newLine(self):
-        self._write("\n")
+        self._text("\n")

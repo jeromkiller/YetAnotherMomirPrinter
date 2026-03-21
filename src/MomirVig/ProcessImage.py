@@ -6,11 +6,24 @@ import matplotlib.image as img
 import numpy as np
 import math
 
-def DitherImage(imageRaw: ImageFile.ImageFile, ditherTexturePath="noise.png"):
+def DitherImage(imageRaw: ImageFile.ImageFile, max_width: int | None = None, max_height: int | None = None, ditherTexturePath="noise.png", negative: bool = False) -> np.ndarray:
+    # resize the image horizontally
+    imageResize = imageRaw
+    if max_width:
+        if imageResize.width > max_width:
+            resize_factor = max_width / imageResize.width
+            imageResize = imageResize.resize((max_width, int(imageRaw.height * resize_factor)))
+
+    # resize the image vertically
+    if max_height:
+        if imageResize.height > max_height:
+            resize_factor = max_height / imageRaw.height
+            imageResize = imageResize.resize((int(imageRaw.width * resize_factor), max_height))
+
     if not os.path.exists(ditherTexturePath):
         GenNoise.generateNoise(100, 100, path=ditherTexturePath)
     noise = img.imread(ditherTexturePath)
-    image = np.array(imageRaw)
+    image = np.array(imageResize)
 
     if np.max(image) > 1:
         # assume this is not a png
@@ -25,36 +38,39 @@ def DitherImage(imageRaw: ImageFile.ImageFile, ditherTexturePath="noise.png"):
     noise = np.tile(noise, (h_tile, v_tile))
     noise = noise[:image.shape[0], :image.shape[1]]
     dithered = image >= noise
+
+    if negative:
+        dithered = dithered != True
     
     return dithered
 
-def toPrintString(image: np.ndarray):
-    test = np.array([[1, 4, 7, 10],
-                     [2, 5, 8, 11],
-                     [3, 6, 9, 12],
-                     [13, 15, 17, 19],
-                     [14, 16, 18, 20]])
-    test = test % 3 == 0
-    flattened = np.array([])
-    for i in range(math.ceil(test.shape[0] / 3)):
-        sliceStart = i * 3
-        sliceStop = sliceStart + 3
-        flatRow = test[:][sliceStart:sliceStop].flatten('F')
-        flattened = np.append(flattened, flatRow)
-    flattened = flattened.astype(int)
-    print(flattened)
-    packed = np.packbits(flattened)
-    print(packed)
+def sliceImage(image: np.ndarray, tile_size: int) -> list[np.ndarray]:
+    slices = list[np.ndarray]()
+    for slice_index in range(math.ceil(image.shape[0] / tile_size)):
+        sliceStart = slice_index * tile_size
+        sliceEnd = sliceStart + tile_size
+        image_slice = image[:][sliceStart:sliceEnd]
+        if image_slice.shape[0] != tile_size:
+            width = image_slice.shape[1]
+            height = tile_size - image_slice.shape[0]
+            new_row = np.zeros((height, width), dtype=image_slice.dtype)
+            image_slice = np.concatenate((image_slice, new_row), axis=0)
+
+        slices.append(image_slice)
+    return slices
+
+def transposeSlice(slice: np.ndarray) -> np.ndarray:
+    shape = slice.shape
+    transposed = slice.transpose()
+    reshaped = transposed.reshape(shape)
+    return reshaped
 
 
-if __name__ == "__main__":
-    toPrintString(np.array([]))
-    exit()
-
-    image_path = "example.jpg"
-    image = img.imread(image_path)
-
-    dithered = DitherImage(image)
-
-    img.imsave("dithered.png", dithered, cmap="gray")    
-    
+def toPrintStrings(image: np.ndarray, tile_size: int) -> list[bytearray]:
+    byte_arrays = list[bytearray]()
+    for slice in sliceImage(image, tile_size):
+        transposed = transposeSlice(slice)
+        flatrow = transposed.flatten('C')
+        byte_data = bytearray(np.packbits(flatrow))
+        byte_arrays.append(byte_data)
+    return byte_arrays
