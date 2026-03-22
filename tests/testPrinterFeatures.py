@@ -1,5 +1,6 @@
 import unittest
 from src.Printer.PrinterDevice import *
+from src.Printer.BufferPrinter import *
 
 class TestLineBreaking(unittest.TestCase):
     def test_no_break(self):
@@ -103,8 +104,9 @@ class TestBlockBreaking(unittest.TestCase):
 class TestTextSpan(unittest.TestCase):
     def test_fitting_span_left(self):
         line_length = 15
-        printer = Printer(line_length)
-        fitting, remainder = printer.textSpan("left", "right")
+        printer = BufferPrinter(line_length)
+        remainder = printer.textSpan("left", "right")
+        fitting = printer.get_buffer()[0]
         self.assertEqual(remainder, "", "Text is short enough it shouldn't break the line")
         self.assertEqual(fitting.split(" ")[0], "left", "'left' should be all the way to the left")
         self.assertEqual(fitting.split(" ")[-1], "right", "'right' should be all the way to the right")
@@ -112,8 +114,9 @@ class TestTextSpan(unittest.TestCase):
 
     def test_fitting_span_Right(self):
         line_length = 15
-        printer = Printer(line_length)
-        fitting, remainder = printer.textSpan("left", "right", True)
+        printer = BufferPrinter(line_length)
+        remainder = printer.textSpan("left", "right", True)
+        fitting = printer.get_buffer()[0]
         self.assertEqual(remainder, "", "Text is short enough it shouldn't break the line")
         self.assertEqual(fitting.split(" ")[0], "left", "'left' should be all the way to the left")
         self.assertEqual(fitting.split(" ")[-1], "right", "'right' should be all the way to the right")
@@ -121,8 +124,9 @@ class TestTextSpan(unittest.TestCase):
 
     def test_breaking_span_left(self):
         line_length = 15
-        printer = Printer(line_length)
-        broken, remainder = printer.textSpan("[prio]", "Right side that's too long")
+        printer = BufferPrinter(line_length)
+        remainder = printer.textSpan("[prio]", "Right side that's too long")
+        broken = printer.get_buffer()[0]
         self.assertEqual(broken.split(" ")[0], "[prio]", "'[prio]' should be all the way to the left")
         self.assertEqual(broken.split(" ")[-1], "Right", "'Right' should be all the way to the right")
         self.assertEqual(len(broken), line_length, "line should have spacing in the middle")
@@ -130,8 +134,9 @@ class TestTextSpan(unittest.TestCase):
 
     def test_breaking_span_right(self):
         line_length = 15
-        printer = Printer(line_length)
-        broken, remainder = printer.textSpan("Name, EpitaphThatsTooLong", "{0}{u}", True)
+        printer = BufferPrinter(line_length)
+        remainder = printer.textSpan("Name, EpitaphThatsTooLong", "{0}{u}", True)
+        broken = printer.get_buffer()[0]
         self.assertEqual(broken.split(" ")[0], "Name,", "'Name,' should be all the way to the left")
         self.assertEqual(broken.split(" ")[-1], "{0}{u}", "'{0}{u}' should be all the way to the right")
         self.assertEqual(len(broken), line_length, "line should have spacing in the middle")
@@ -139,8 +144,9 @@ class TestTextSpan(unittest.TestCase):
 
     def test_low_width_text_break(self):
         line_length = 15
-        printer = Printer(line_length)  
-        broken, remainder = printer.textSpan("Test Textin", "abcd", False)
+        printer = BufferPrinter(line_length)  
+        remainder = printer.textSpan("Test Textin", "abcd", False)
+        broken = printer.get_buffer()[0]
         self.assertEqual(broken, "Test Textin ab-")
         self.assertEqual(remainder, "cd")
 

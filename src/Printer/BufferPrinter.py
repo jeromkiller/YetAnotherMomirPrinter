@@ -1,9 +1,10 @@
 from . import PrinterDevice
+from .TextDecorators import Decoration
 
 class BufferPrinter(PrinterDevice.Printer):
     def __init__(self, width: int = 42):
         super().__init__(width)
-        self.buffer = list[str]()
+        self.buffer: list[str] = [""]
 
     def clear_buffer(self):
         self.buffer.clear()
@@ -12,10 +13,14 @@ class BufferPrinter(PrinterDevice.Printer):
         return self.buffer
 
     def _write(self, data):
-        self.buffer.append(data)
+        pass
 
-    def _text(self, text: str):
-        self._write(text)
+    def _text(self, text: str, decoration: Decoration | None = None):
+        for char in text:
+            if char == "\n":
+                self.buffer.append("")
+            else:
+                self.buffer[-1] += char
 
     def _cut(self):
         self._text("\n--------- cutline ---------\n")
