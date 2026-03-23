@@ -33,18 +33,38 @@ class CardFace():
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
         elif self.layout == "leveler":
             oracle_parts = face["oracle_text"].split("\n")
-            self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
-            oracle_string = ""
-            for index, part in enumerate(oracle_parts):
-                if index % 3 == 2:
-                    self.stats.append(part)
+            i = 0
+            new_oracle = ""
+            while i < len(oracle_parts):
+                if i == 0:
+                    self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
+                    new_oracle += oracle_parts[i]
+                    i += 1
                     continue
-                if oracle_string != "":
-                    oracle_string += "\n"
-                oracle_string += part
-                if index % 3 == 0:
-                    self.oracle.append(oracle_string)
-                    oracle_string = ""
+                part = oracle_parts[i]
+                if "LEVEL" in part:
+                    self.oracle.append(new_oracle)
+                    new_oracle = part
+                    self.stats.append(oracle_parts[i + 1])
+                    i += 2
+                else:
+                    new_oracle += "\n" + oracle_parts[i]
+                    i += 1
+            self.oracle.append(new_oracle)
+
+            #oracle_parts = face["oracle_text"].split("\n")
+            #self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
+            #oracle_string = ""
+            #for index, part in enumerate(oracle_parts):
+            #    if index % 3 == 2:
+            #        self.stats.append(part)
+            #        continue
+            #    if oracle_string != "":
+            #        oracle_string += "\n"
+            #    oracle_string += part
+            #    if index % 3 == 0:
+            #        self.oracle.append(oracle_string)
+            #        oracle_string = ""
         else:
             self.oracle = [face.get("oracle_text", "")]
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]

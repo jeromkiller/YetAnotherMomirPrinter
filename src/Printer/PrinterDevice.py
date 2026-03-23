@@ -6,6 +6,11 @@ LEFT = 0
 CENTER = 1
 RIGHT = 2
 
+TITLE_DECOR = Decoration.BOLD
+LEVEL_DECOR = Decoration.BOLD
+TYPE_DECOR = Decoration.UNDERLINE
+STAT_DECOR = Decoration.BOLD | Decoration.UNDERLINE
+
 class Printer():
     def __init__(self, text_width: int):
         self.max_text_with = text_width
@@ -43,6 +48,8 @@ class Printer():
         self._reset()
         if card.face.layout == "normal":
             self._print_normal_card(card)
+        if card.face.layout == "leveler":
+            self._print_leveler_card(card)
         else:
             print("not implemented")
             pass
@@ -50,11 +57,49 @@ class Printer():
         self.cut()
     
     def _print_normal_card(self, card: MagicCard):
-        # card title
-        remainder = self.textSpan(card.face.name, card.face.cost, True, Decoration.BOLD)
-        self.writeLine(remainder, Decoration.BOLD)
+        assert card.face.layout == "normal"
+        self.printCardTitle(card.face.name, card.face.cost)
+        self.printCardImage(card)
+        self.printTypeLine(card.face.type)
 
-        # image
+        # oracle text
+        self.writeLine(card.face.oracle[0])
+
+        # stats & credit
+        self.writeLine()
+        remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True, right_decor=STAT_DECOR)
+        self.writeLine(remainder)
+        self.writeLine()
+
+    def _print_leveler_card(self, card: MagicCard):
+        assert card.face.layout == "leveler"
+        self.printCardTitle(card.face.name, card.face.cost)
+        self.printCardImage(card)
+        self.printTypeLine(card.face.type)
+
+        # oracle text & levels
+        stat_len = len(max(card.face.stats, key=lambda l: len(l)))
+        oracle_width = self.max_text_with - 1 - stat_len
+        self.print_columns([card.face.oracle[0], card.face.stats[0]], [oracle_width, stat_len], [None, STAT_DECOR])
+        self.writeLine()
+        for i in range(1, len(card.face.oracle)):
+            oracle_parts = card.face.oracle[i].split("\n", 1)
+            oracle_width = self.max_text_with - 2 - 7 - stat_len
+            level = oracle_parts[0]
+            oracle = oracle_parts[1] if len(oracle_parts) > 1 else ""
+            stats = card.face.stats[i]
+            self.print_columns([level, oracle, stats], [7, oracle_width, stat_len], [LEVEL_DECOR, None, STAT_DECOR])
+            self.writeLine()
+
+        # credits
+        self.writeLine(card.face.image_credit)
+
+
+    def printCardTitle(self, card_name: str, cost: str):
+        remainder = self.textSpan(card_name, cost, True, TITLE_DECOR)
+        self.writeLine(remainder, TITLE_DECOR)
+
+    def printCardImage(self, card: MagicCard):
         if card.image is not None:
             self._image(card.image)
             self.writeLine()
@@ -66,17 +111,8 @@ class Printer():
             self._text("----------".center(self.max_text_with))
             self.writeLine()
 
-        # type line
-        self.writeLine(card.face.type, Decoration.UNDERLINE)
-        self.writeLine()
-
-        # oracle text
-        self.writeLine(card.face.oracle[0])
-
-        # stats & credit
-        self.writeLine()
-        remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True, right_decor=Decoration.BOLD | Decoration.UNDERLINE)
-        self.writeLine(remainder)
+    def printTypeLine(self, typeline: str):
+        self.writeLine(typeline, TYPE_DECOR)
         self.writeLine()
 
     def textSpan(self, left_text: str, right_text: str, right_priority: bool = False,
@@ -144,6 +180,56 @@ class Printer():
             broken_line, remainder = self.breakLine(remainder, text_width)
             lines.append(broken_line)
         return lines
+
+    def print_columns(self, texts: list[str], column_widths: list[int], decorations: list[Decoration | None] = list(), right_justify_right_column = True):
+        if len(texts) != len(column_widths):
+            print("Amount of text and amount of columns should be the same")
+            return
+        
+        if sum(column_widths) + len(column_widths) - 1 > self.max_text_with:
+            print("Columns combine to be too wide")
+            return
+
+        num_columns = len(texts)
+        columns = [self.breakText(texts[i], column_widths[i]) for i in range(len(texts))]
+        padded_lines = list[list[str]]()
+
+        total_lines = len(max(columns, key=lambda l: len(l)))
+        for line_index in range(total_lines):
+            new_line = list[str]()
+            for i, col in enumerate(columns):
+                
+                if len(col) <= line_index:
+                    #new_line.append(" " * padding)
+                    new_line.append("")
+                    continue
+                else:
+                    line = col[line_index]
+                    #padding -= len(line)
+                    #new_line.append(line + (" " * padding))
+                    new_line.append(line)
+            padded_lines.append(new_line)
+
+
+        for row in padded_lines:
+            for i, line in enumerate(row):
+                decor = None
+                if i < len(decorations):
+                    decor = decorations[i]
+
+                if i < num_columns - 1:
+                    self._text(line, decor)
+                    padding = column_widths[i]
+                    padding -= len(line)
+                    padding += 1
+                    self._text(" " * padding)
+                else:
+                    if right_justify_right_column:
+                        padding = column_widths[i]
+                        padding -= len(line)
+                        self._text(" " * padding)
+                    self._text(line, decor)
+                    self.newLine()
 
 
     def newLine(self):
