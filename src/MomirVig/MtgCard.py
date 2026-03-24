@@ -11,10 +11,12 @@ class CardFace():
         if "card_faces" in json and json["layout"] != "flip":
             face = json["card_faces"][0]
             card_type = face["type_line"]
-            if "Saga" in card_type and "Creature" in card_type:
-                self.layout = "saga"
-            elif "Creature" in card_type:
+            if "Creature" in card_type:
                 self.layout = "normal"
+        
+        card_type = face["type_line"]
+        if "Saga" in card_type and "Creature" in card_type:
+                self.layout = "saga"
         
         self.name: str = face.get("name", "")
         self.cost: str = face.get("mana_cost", "")
@@ -29,7 +31,21 @@ class CardFace():
             self.oracle = [f["oracle_text"] for f in json["card_faces"]]
             self.stats = [f"{f.get("power", "")}/{f.get("toughness", "")}" for f in json["card_faces"]]
         elif self.layout == "saga":
-            self.oracle = [line for line in json["oracle_text"].split("\n")]
+            oracle_parts = json["oracle_text"].split("\n")
+            i = 0
+            new_oracle = "" 
+            for i, part in enumerate(oracle_parts):
+                if i == 0:
+                    new_oracle = part
+                    continue
+                if "•" not in part:
+                    self.oracle.append(new_oracle)
+                    new_oracle = ""
+                if new_oracle:
+                    new_oracle += "\n" + part
+                else:
+                    new_oracle += part
+            self.oracle.append(new_oracle)
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
         elif self.layout == "leveler":
             oracle_parts = face["oracle_text"].split("\n")
@@ -51,20 +67,6 @@ class CardFace():
                     new_oracle += "\n" + oracle_parts[i]
                     i += 1
             self.oracle.append(new_oracle)
-
-            #oracle_parts = face["oracle_text"].split("\n")
-            #self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
-            #oracle_string = ""
-            #for index, part in enumerate(oracle_parts):
-            #    if index % 3 == 2:
-            #        self.stats.append(part)
-            #        continue
-            #    if oracle_string != "":
-            #        oracle_string += "\n"
-            #    oracle_string += part
-            #    if index % 3 == 0:
-            #        self.oracle.append(oracle_string)
-            #        oracle_string = ""
         else:
             self.oracle = [face.get("oracle_text", "")]
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]

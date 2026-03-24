@@ -32,6 +32,15 @@ class Printer():
 
     def _reset(self):
         pass
+
+    def _start_page_mode(self):
+        pass
+
+    def _end_page_mode_upside_down(self):
+        pass
+
+    def _end_page_mode_with_image(self, image: ImageFile):
+        pass
     
     def cut(self):
         self._cut()
@@ -48,8 +57,12 @@ class Printer():
         self._reset()
         if card.face.layout == "normal":
             self._print_normal_card(card)
-        if card.face.layout == "leveler":
+        elif card.face.layout == "leveler":
             self._print_leveler_card(card)
+        elif card.face.layout == "flip":
+            self._print_flip_card(card)
+        elif card.face.layout == "saga":
+            self._print_saga_creature(card)
         else:
             print("not implemented")
             pass
@@ -60,6 +73,7 @@ class Printer():
         assert card.face.layout == "normal"
         self.printCardTitle(card.face.name, card.face.cost)
         self.printCardImage(card)
+        self.writeLine()
         self.printTypeLine(card.face.type)
 
         # oracle text
@@ -75,6 +89,7 @@ class Printer():
         assert card.face.layout == "leveler"
         self.printCardTitle(card.face.name, card.face.cost)
         self.printCardImage(card)
+        self.writeLine()
         self.printTypeLine(card.face.type)
 
         # oracle text & levels
@@ -94,15 +109,61 @@ class Printer():
         # credits
         self.writeLine(card.face.image_credit)
 
+    def _print_flip_card(self, card: MagicCard):
+        assert card.face.layout == "flip"
+        # upright part
+        self.printCardTitle(card.face.getFlipName(0), card.face.cost)
+        self.writeLine(card.face.oracle[0])
+        remainder = self.textSpan(card.face.getFlipType(0), card.face.stats[0], True, TYPE_DECOR, STAT_DECOR)
+        self.writeLine(remainder, TYPE_DECOR)
+
+        self.printCardImage(card)
+
+        # flipped part
+        self._start_page_mode()
+        self.printCardTitle(card.face.getFlipName(1), "")
+        self.writeLine(card.face.oracle[1])
+        remainder = self.textSpan(card.face.getFlipType(1), card.face.stats[1], True, TYPE_DECOR, STAT_DECOR)
+        self.writeLine(remainder, TYPE_DECOR)
+        self._end_page_mode_upside_down()
+
+        self.writeLine(card.face.image_credit)
+
+    def _print_saga_creature(self, card: MagicCard):
+        assert card.face.layout == "saga"
+
+        self.printCardTitle(card.face.name, card.face.cost)
+        self.writeLine(card.face.oracle[0])
+
+        self._start_page_mode()
+        for oracle_part in card.face.oracle[1:]:
+            if "—" not in oracle_part:
+                break
+            parts = oracle_part.split(" — ", 1)
+            levels = parts[0]
+            text = "- " + parts[1]
+            self.print_columns([levels, text], [4, 16], [LEVEL_DECOR, None], right_justify_right_column=False)
+
+        self._end_page_mode_with_image(card.image)
+
+        self.printTypeLine(card.face.type)
+
+        if "—" not in card.face.oracle[-1]:
+            self.writeLine(card.face.oracle[-1])
+            self.writeLine()
+
+        remainder = self.textSpan(card.face.image_credit, card.face.stats[0], True, right_decor=STAT_DECOR)
+        self.writeLine(remainder)
+        self.writeLine()
+
 
     def printCardTitle(self, card_name: str, cost: str):
         remainder = self.textSpan(card_name, cost, True, TITLE_DECOR)
         self.writeLine(remainder, TITLE_DECOR)
 
-    def printCardImage(self, card: MagicCard):
+    def printCardImage(self, card: MagicCard, ):
         if card.image is not None:
             self._image(card.image)
-            self.writeLine()
         else:
             self._text("----------".center(self.max_text_with))
             self._text("\n\n\n")
@@ -113,7 +174,6 @@ class Printer():
 
     def printTypeLine(self, typeline: str):
         self.writeLine(typeline, TYPE_DECOR)
-        self.writeLine()
 
     def textSpan(self, left_text: str, right_text: str, right_priority: bool = False,
                  left_decor: Decoration | None = None, right_decor: Decoration | None = None) -> str:

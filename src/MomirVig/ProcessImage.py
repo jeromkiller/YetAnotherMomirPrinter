@@ -1,24 +1,13 @@
 from . import GenNoise
 import os
 
-from PIL import ImageFile
+from PIL import ImageFile, Image
 import matplotlib.image as img
 import numpy as np
 import math
 
-def DitherImage(imageRaw: ImageFile.ImageFile, max_width: int | None = None, max_height: int | None = None, ditherTexturePath="noise.png", negative: bool = False) -> np.ndarray:
-    # resize the image horizontally
-    imageResize = imageRaw
-    if max_width:
-        if imageResize.width > max_width:
-            resize_factor = max_width / imageResize.width
-            imageResize = imageResize.resize((max_width, int(imageRaw.height * resize_factor)))
-
-    # resize the image vertically
-    if max_height:
-        if imageResize.height > max_height:
-            resize_factor = max_height / imageRaw.height
-            imageResize = imageResize.resize((int(imageRaw.width * resize_factor), max_height))
+def DitherImage(imageRaw: ImageFile.ImageFile | Image.Image, max_width: int | None = None, max_height: int | None = None, ditherTexturePath="noise.png", negative: bool = False) -> np.ndarray:
+    imageResize = resizeImage(imageRaw, max_width, max_height)
 
     if not os.path.exists(ditherTexturePath):
         GenNoise.generateNoise(100, 100, path=ditherTexturePath)
@@ -43,6 +32,22 @@ def DitherImage(imageRaw: ImageFile.ImageFile, max_width: int | None = None, max
         dithered = dithered != True
     
     return dithered
+
+def resizeImage(image: ImageFile.ImageFile | Image.Image, max_width: int | None = None, max_height: int | None = None) -> Image.Image:
+    # resize the image horizontally
+    imageResize = image
+    if max_width:
+        if imageResize.width > max_width:
+            resize_factor = max_width / imageResize.width
+            imageResize = imageResize.resize((max_width, int(imageResize.height * resize_factor)))
+
+    # resize the image vertically
+    if max_height:
+        if imageResize.height > max_height:
+            resize_factor = max_height / imageResize.height
+            imageResize = imageResize.resize((int(imageResize.width * resize_factor), max_height))
+    return imageResize
+
 
 def sliceImage(image: np.ndarray, tile_size: int) -> list[np.ndarray]:
     slices = list[np.ndarray]()

@@ -15,6 +15,11 @@ FONT_A              = b"\x1B\x4d\x00"
 FONT_B              = b"\x1B\x4d\x01"
 SELECT_PRINT_MODE   = b"\x1b\x21"
 
+START_PAGE_MODE     = b"\x1b\x4c"
+PAGE_UPSIDEDOWN     = b"\x1b\x54\x02"
+PAGE_AREA_SETUP     = b"\x1b\x57"
+PAGE_PRINT_RETURN   = b"\x0c"
+
 RESET_LINE_SPACING  = b"\x1b\x32"
 EDIT_LINE_SPACING   = b"\x1b\x33"
 SET_IMAGE_SPACING   = EDIT_LINE_SPACING + b"\x18"
