@@ -4,6 +4,7 @@ import requests
 import time
 import matplotlib.image as img
 from PIL import Image, ImageFile
+from . import exceptions
 
 # edge cases:
 # - 0 cost cards with the creture filter includes lands that transform into creatures
@@ -12,13 +13,43 @@ from PIL import Image, ImageFile
 # - some transforming cards with non-creature fronts and creature backs are included
 #   frame:fandfc can be filtered out for
 
-momir_path = "https://api.scryfall.com/cards/random?q=type:creature+mv:" # mana value 1 for test
-headers = {"User-Agent": "MomirTest/0.1",
+api_path = "https://api.scryfall.com/cards/random" # mana value 1 for test
+headers = {"User-Agent": "YetAnotherMomirPrinter/0.1",
            "Accept": "*/*"}    
 
 lastFetchTimestamp = 0.0
 
-def fetch(uri: str, visited: set[str]):
+
+class searchParams():
+    def __init__(self, mana: int = 0, legalities: list[str] = list(), mtg_sets: list[str] = list()) -> None:
+        self.mana_value: int = mana
+        self.legalities: list[str] = legalities
+        self.mtg_sets: list[str] = mtg_sets
+        self.ignore_list: set[str] = set()
+        self.static_params: list[str] = ["type:creature", "game:paper", "lang:en","-frame:fandfc", ]
+    
+    def get_params(self, mana: int | None = None) -> str:
+        if mana is not None:
+            self.mana_value = mana
+        params = list[str]()
+        params.append("mv:" + str(self.mana_value))
+        if self.mtg_sets:
+            set_params = ["set:" + s for s in self.mtg_sets]
+            params.append(f"({" or ".join(set_params)})")
+        if self.legalities:
+            legality_params = ["legality:" + s for s in self.legalities]
+            params.append(f"({" or ".join(legality_params)})")
+        if self.ignore_list:
+            ignore_params = ["-oracle_id:" + oid for oid in self.ignore_list]
+            params.extend(ignore_params)
+        params.extend(self.static_params)
+
+        output = "+".join(params)
+        return output
+
+search_params = searchParams(legalities = ["modern"])
+
+def fetch(uri: str, params: str, visited: set[str]):
     # limit rate ourselves to 10 fetches per second
     time_stamp = time.time()
     time_delta = time_stamp - lastFetchTimestamp
@@ -28,30 +59,39 @@ def fetch(uri: str, visited: set[str]):
     if uri in visited:
         return None
     
+    uri += "?q=" + params
     print(f"fetched: {uri}")
     visited.add(uri)
     return requests.get(uri, headers=headers)
 
 
-def fetchCard(uri: str, visited: set[str] = set()) -> MtgCard.MagicCard:
-    response = fetch(uri, visited)
-    assert response
+def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.MagicCard:
+    response = fetch(uri, params, visited)
+    assert response is not None
 
+    if response.status_code == 404:
+        raise exceptions.CardNotFoundException()
     if response.status_code != 200:
-        print(f"something went wrong: {response.status_code}")
-        exit()
+        raise exceptions.UnhandledStatusCodeException(response.json().get("details", "Unknown"), response.status_code)
 
     print(f"fetched: {response.json().get("scryfall_uri", "")}")
     card_json = response.json()
-    card = MtgCard.MagicCard(card_json)
+    try:
+        card = MtgCard.MagicCard(card_json)
+    except exceptions.CardNotCreatureException as e:
+        print(e)
+        search_params.ignore_list.add(e.oracle_id)
+        # try again
+        return fetchCard(uri, params + "-oracle_id:" + e.oracle_id)
+    
     card.setImage(fetchArt(card.face.image_url))
     card.extras = fetchExtras(card_json, visited)
-
     return card
 
 def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
     print(f"Getting random card with cost {cost}")
-    return fetchCard(f"{momir_path}{cost}")
+    params = search_params.get_params(mana=cost)
+    return fetchCard(api_path, params)
 
 
 def fetchArt(uri: str) -> ImageFile.ImageFile:
@@ -69,7 +109,7 @@ def fetchExtras(card_json, visited: set[str]) -> list[MtgCard.MagicCard]:
             continue
 
         token_uri = part["uri"]
-        token_data = fetch(token_uri, visited)
+        token_data = fetch(token_uri, "",visited)
         if token_data is None:
             continue
         if token_data.status_code != 200:
@@ -79,3 +119,4 @@ def fetchExtras(card_json, visited: set[str]) -> list[MtgCard.MagicCard]:
         token.setImage(fetchArt(token.face.image_url))
         extras.append(token)
     return extras
+

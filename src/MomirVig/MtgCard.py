@@ -3,7 +3,8 @@ from . import ProcessImage
 import matplotlib.image as img
 import numpy as np
 from PIL import Image, ImageFile
-        
+from .exceptions import CardNotCreatureException
+
 class CardFace():
     def __init__(self, json):
         face = json
@@ -13,15 +14,21 @@ class CardFace():
             card_type = face["type_line"]
             if "Creature" in card_type:
                 self.layout = "normal"
+
+        if self.layout in ["host", "token", "mutate", "prototype", "meld", "double_faced_token", "emblem"]:
+            self.layout = "normal"
         
         card_type = face["type_line"]
         if "Saga" in card_type and "Creature" in card_type:
                 self.layout = "saga"
+
+        if "Creature" not in card_type and "Token" not in card_type:
+            raise CardNotCreatureException(json.get("name", "unknown"), json.get("oracle_id"))
         
         self.name: str = face.get("name", "")
         self.cost: str = face.get("mana_cost", "")
         self.identity: str = "".join(map(str, face.get("colors", [])))
-        self.image_url: str = face["image_uris"]["art_crop"]
+        self.image_url: str = face.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
         self.image_credit: str = face.get("artist", "")
         self.type: str = face.get("type_line", "")
 
