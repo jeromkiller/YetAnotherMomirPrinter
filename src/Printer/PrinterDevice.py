@@ -141,7 +141,7 @@ class Printer():
                 break
             parts = oracle_part.split(" — ", 1)
             levels = parts[0]
-            text = "- " + parts[1]
+            text = "— " + parts[1]
             self.print_columns([levels, text], [4, 16], [LEVEL_DECOR, None], right_justify_right_column=False)
 
         self._end_page_mode_with_image(card.image)

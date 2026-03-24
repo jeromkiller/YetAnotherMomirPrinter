@@ -59,6 +59,7 @@ class UsbPrinter(PrinterDevice.Printer):
 
     def _text(self, text: str, decoration: Decoration | None = None):
         data = text.replace("—", "-")
+        data = data.replace("•", "*")
 
         self.set_decoration(decoration)
         self._write(data.encode())
