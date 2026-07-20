@@ -6,7 +6,7 @@ from .constants import *
 from ..MomirVig import ProcessImage 
 from PIL.ImageFile import ImageFile
 from PIL.Image import Image
-import numpy as np
+#import numpy as np
 
 vid = 0x04b8
 did = 0x0e02
@@ -162,13 +162,16 @@ class UsbPrinter(PrinterDevice.Printer):
         max_width = 512
         if half_width:
             max_width = int(max_width / 2)
-        dithered = ProcessImage.DitherImage(image, max_width, negative=True)
+        #dithered = ProcessImage.DitherImage(image, max_width, negative=True)
         
-        flatrow = dithered.flatten('C')
-        byte_data = bytearray(np.packbits(flatrow))
+        #flatrow = dithered.flatten('C')
+        #byte_data = bytearray(np.packbits(flatrow))
+        byte_data = image.tobytes()
 
-        height = dithered.shape[0]
-        width = dithered.shape[1]
+        #height = dithered.shape[0]
+        #width = dithered.shape[1]
+        height = image.height
+        width = image.width
         xL = int(width % 256)
         xH = int(width / 256)
         yL = int(height % 256)
