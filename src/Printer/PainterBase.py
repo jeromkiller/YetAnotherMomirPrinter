@@ -1,5 +1,6 @@
 from PIL import Image, ImageFont, ImageDraw, ImageText, ImageOps, ImageFile
 from ..MomirVig.MtgCard import MagicCard
+from .TextDecorators import Decoration
 
 large_text_size = 20
 normal_text_size = 15
@@ -18,6 +19,7 @@ class PainterBase():
         self.canvas = Image.new("1", canvas_size, color=1)
         self.canvas_size = (canvas_size[0] - 1, canvas_size[1] - 1)
         self.draw = ImageDraw.Draw(self.canvas)
+        self.obscured_areas = list[tuple[float, float, float, float]]()
 
         # fonts
         self.font_large = ImageFont.truetype("Font/SwanseaBold-D0ox.ttf", size=large_text_size)
@@ -37,6 +39,53 @@ class PainterBase():
 
     def _reset(self):
         self.draw.rectangle([(0, 0), self.canvas_size], fill=1)
+
+    def _reserveBoundingBox(self, bbox: tuple[float, float, float, float]):
+        self.obscured_areas.append((int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])))
+
+    def _paintText(self, pos: tuple[int, int], text: str, size: int, decor: Decoration | None = None):
+        font_path = "Font/Swansea-q3pd.ttf"
+        if decor:
+            if Decoration.BOLD in decor:
+                font_path = "Font/SwanseaBold-D0ox.ttf"
+        
+        # try to print the font, shrink if it doesn't fit
+        tries = 0
+        leftovers = None
+        font = ImageFont.truetype(font_path, size - tries)
+        wrapped = self._wrapText(pos, text, font)
+        # todo check if it fits the canvas horizontally
+        self.draw.text(pos, wrapped)
+
+    def _check_obstruction(self, box: tuple[float, float, float, float]) -> bool:
+        for obstruction in self.obscured_areas:
+            if box[0] <= obstruction[2] and box[2] >= obstruction[0] and \
+               box[1] <= obstruction[3] and box[3] >= obstruction[1]:
+                return True
+        return box[2] > self.canvas.width
+
+    def _wrapText(self, pos: tuple[int, int], string: str, font: ImageFont.BaseImageFont):
+        text_block = ImageText.Text("", font)
+        text_line = ImageText.Text("", font)
+
+        height_offset = pos[1]
+        for word in string.split(" "):
+            if text_line.text:
+                text_line.text += " "
+                text_block.text += " "
+            text_line.text += word
+            line_bbox = text_line.get_bbox((pos[0], height_offset))
+            while self._check_obstruction(line_bbox):
+                # line too large, or obstructed
+                text_block.text += "\n"
+                height_offset = text_block.get_bbox(pos)[3] - 1
+                text_line.text = word
+                line_bbox = text_line.get_bbox((pos[0], height_offset))
+                if line_bbox[3] > self.canvas.height:
+                    return text_block
+            else:
+                text_block.text += word
+        return text_block
 
     def _paintTitle(self, card_name: str, cost:str):
         card_width = self.canvas_size[0]
