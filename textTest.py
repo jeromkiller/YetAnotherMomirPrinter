@@ -103,7 +103,8 @@ for frame in range(duration):
     painter._paintText((0, 0), "Long piece of text that may or may not fit on here. Thus it should probably get wrapped around any obstructions it might encounter", 20, None)
     imlist.append(painter.canvas)
 
-imlist[0].save("textTest.png", "GIF", save_all=True, append_images=imlist, duration=60, loop=0)
+res = list(map(lambda im: im.convert("L"), imlist))
+res[0].save("textTest.gif", "GIF", save_all=True, append_images=res, duration=60, loop=0, optimize=False, transparency=1)
 #blocker1 = (150, 25, 180, 100)
 #blocker2 = (100, 80, 280, 180)
 #blocker3 = (5, 170, 300, 500)
