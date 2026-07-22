@@ -41,10 +41,23 @@ class PainterBase():
         self.draw.rectangle([(0, 0), self.canvas_size], fill=1)
         self.obscured_areas = list()
 
+    def _rotate_180(self):
+        self.canvas = self.canvas.rotate(180)
+        self.draw = ImageDraw.Draw(self.canvas)
+        self.obscured_areas = list(map(lambda bbox: (self.canvas_size[0] - bbox[2],
+                                                     self.canvas_size[1] - bbox[3],
+                                                     self.canvas_size[0] - bbox[0],
+                                                     self.canvas_size[1] - bbox[1],), self.obscured_areas))
+
     def _reserveBoundingBox(self, bbox: tuple[float, float, float, float]):
         self.obscured_areas.append((int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])))
 
-    def _paintText(self, pos: tuple[int, int], text: str, size: int, decor: Decoration | None = None):
+    def _paintObscuredAreas(self):
+        self.draw.rectangle([(0, 0), self.canvas_size], fill=1)
+        for bbox in self.obscured_areas:
+            self.draw.rectangle(bbox)
+
+    def _paintWrappedText(self, pos: tuple[int, int], text: str, font_size: int, area_height: int, decor: Decoration | None = None):
         font_path = "Font/Swansea-q3pd.ttf"
         if decor:
             if Decoration.BOLD in decor:
@@ -52,15 +65,31 @@ class PainterBase():
         
         # try to print the font, shrink if it doesn't fit
         wrapped = None
-        for font_size in range(size, 10, -1):
+        for font_size in range(font_size, 9, -1):
             font = ImageFont.truetype(font_path, font_size)
-            wrapped = self._wrapText(pos, text, font)
-            if wrapped.get_bbox(pos)[3] < self.canvas.height:
+            wrapped = self._wrapText(pos, text, font, area_height)
+            if wrapped.get_bbox(pos)[3] < pos[1] + area_height:
                 break
         else:
             raise Exception("Text doesn't fit the area") #todo custom exception
         
-        self.draw.text(pos, wrapped)
+        self._paintText(pos, wrapped)
+
+    def _paintText(self, pos: tuple[int, int], text: ImageText.Text) -> tuple[float, float, float, float]:
+        self.draw.text(pos, text)
+        bbox = text.get_bbox(pos)
+        self._reserveBoundingBox(bbox)
+        return bbox
+
+    def _paintRightJustifiedText(self, pos: tuple[int, int], text: str, size: int, decor: Decoration | None = None) -> tuple[float, float, float, float]:
+        font_path = "Font/Swansea-q3pd.ttf"
+        if decor:
+            if Decoration.BOLD in decor:
+                font_path = "Font/SwanseaBold-D0ox.ttf"
+        font = ImageFont.truetype(font_path, size)
+        paint_text = ImageText.Text(text, font, "1")
+        pos = (self.canvas.width - pos[0] - int(paint_text.get_length()), pos[1])
+        return self._paintText(pos, paint_text)
 
     def _check_obstruction(self, box: tuple[float, float, float, float]) -> bool:
         for obstruction in self.obscured_areas:
@@ -69,9 +98,9 @@ class PainterBase():
                 return True
         return box[2] > self.canvas.width
 
-    def _wrapText(self, pos: tuple[int, int], string: str, font: ImageFont.BaseImageFont):
-        text_block = ImageText.Text("", font)
-        text_line = ImageText.Text("", font)
+    def _wrapText(self, pos: tuple[int, int], string: str, font: ImageFont.BaseImageFont, area_height: int):
+        text_block = ImageText.Text("", font, mode="1")
+        text_line = ImageText.Text("", font, mode="1")
 
         height_offset = pos[1]
         for word in string.split(" "):
@@ -85,7 +114,7 @@ class PainterBase():
                 text_line.text = word
                 text_block.text += "\n"
                 height_offset = text_block.get_bbox(pos)[3] - 1
-                if height_offset > self.canvas.height:
+                if height_offset > pos[1] + area_height:
                     # text block doesn't fit the canvas anymore, we can return now
                     return text_block                
                 line_bbox = text_line.get_bbox((pos[0], height_offset))
@@ -93,16 +122,17 @@ class PainterBase():
                 text_block.text += word
         return text_block
 
-    def _paintTitle(self, card_name: str, cost:str):
-        card_width = self.canvas_size[0]
-        cost_text = ImageText.Text(cost, self.font_large, "1", direction="rtl")
-        cost_bb = cost_text.get_bbox()
-        name_text = ImageText.Text(card_name, self.font_large, "1")
-        name_width = int(card_width - cost_bb[2])
-        name_text.wrap(name_width, self.TitleRegion.AreaHeight)
+    def _paintTitle(self, card_name: str):
+        self._paintWrappedText((0, self.TitleRegion.HeightOffset), card_name, large_text_size, self.TitleRegion.AreaHeight, Decoration.BOLD)
 
-        self.draw.text((0, self.TitleRegion.HeightOffset), name_text)
-        self.draw.text((card_width - cost_bb[2], self.TitleRegion.HeightOffset), cost_text)
+    def _paintCost(self, cost: str):
+        self._paintRightJustifiedText((0, self.TitleRegion.HeightOffset), cost, self.TitleRegion.AreaHeight, Decoration.BOLD)
+
+    def _paintStats(self, stats:str, height: int):
+        bbox = self._paintRightJustifiedText((5, height), stats, 25, Decoration.BOLD)
+        border = (bbox[0] - 4, bbox[1] - 3, bbox[2] + 3, bbox[3] + 3)
+        self.draw.rounded_rectangle(border, 6)
+        self._reserveBoundingBox(border)
 
     def _paintImage(self, card: MagicCard):
         if card.image is not None:
@@ -111,37 +141,19 @@ class PainterBase():
             im = ImageOps.fit(im, (self.canvas_size[0], self.ImageRegion.AreaHeight))
             im = im.convert("1")
             self.draw._image.paste(im, (0, self.ImageRegion.HeightOffset))
-        self.draw.rectangle([(0, self.ImageRegion.HeightOffset),
-                              (self.canvas_size[0], self.ImageRegion.HeightOffset + self.ImageRegion.AreaHeight)])
+        rectangle = (0, self.ImageRegion.HeightOffset, 
+                     self.canvas_size[0], self.ImageRegion.HeightOffset + self.ImageRegion.AreaHeight)
+        self.draw.rectangle(rectangle)
+        self._reserveBoundingBox(rectangle)
 
     def _paintTypeline(self, typeline: str):
-        type_text = ImageText.Text(typeline, self.font_large, "1")
-        type_text.wrap(self.canvas_size[0], self.TypeRegion.AreaHeight)
-        self.draw.text((0, self.TypeRegion.HeightOffset), type_text)
+        self._paintWrappedText((0, self.TypeRegion.HeightOffset), typeline, large_text_size, self.TypeRegion.AreaHeight, Decoration.BOLD)
 
     def _paintOracle(self, text: str):
-        textbox_text = ImageText.Text(text, self.font_normal, "1")
-        extra = textbox_text.wrap(self.canvas_size[0], self.TextRegion.AreaHeight)
-        if extra:
-            textbox_text = ImageText.Text(text, self.font_small, "1")
-            extra = textbox_text.wrap(self.canvas_size[0], self.TextRegion.AreaHeight)
-        if extra:
-            textbox_text = ImageText.Text(text, self.font_tiny, "1")
-            textbox_text.wrap(self.canvas_size[0], self.TextRegion.AreaHeight)
-        self.draw.text((0, self.TextRegion.HeightOffset), textbox_text)
+        self._paintWrappedText((0, self.TextRegion.HeightOffset), text, normal_text_size, self.TextRegion.AreaHeight)
 
-    def _paintBottom(self, image_credit: str, stats: str):
-        if len(stats) > 0:
-            stats_text = ImageText.Text(stats, self.font_large, "1")
-            stats_bbox = stats_text.get_bbox()
-            pt_box = (stats_bbox[2] + 20, self.BottomRegion.AreaHeight)
-            pt_origin = (self.canvas_size[0] - pt_box[0], self.BottomRegion.HeightOffset)
-            pt_other_corner = (pt_origin[0] + pt_box[0], pt_origin[1] + pt_box[1])
-            self.draw.rounded_rectangle((pt_origin, pt_other_corner), 6)
-            self.draw.text((pt_origin[0] + 10, pt_origin[1] + 3), stats_text)
-
-        artist_text = ImageText.Text("Artist: " + image_credit, self.font_small, "1")
+    def _paintArtistCredit(self, credit: str):
+        artist_text = ImageText.Text("Artist: " + credit, mode="1")
         artist_bbox = artist_text.get_bbox()
-        self.draw.text((0, self.canvas_size[1] - artist_bbox[3]), artist_text)
-
+        self._paintText((0, int(self.canvas_size[1]) - int(artist_bbox[3])), artist_text)
     

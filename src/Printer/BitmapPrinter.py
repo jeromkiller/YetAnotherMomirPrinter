@@ -2,6 +2,7 @@ from PIL import Image, ImageFont, ImageDraw, ImageText, ImageOps, ImageFile
 from ..MomirVig.MtgCard import MagicCard
 from .StandardPainter import StandardPainter
 from .FlipPainter import FlipPainter
+from .LevelerPainter import LevelerPainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -24,7 +25,9 @@ class BitmapPrinter():
         painter = None
         if card.face.layout == "normal":
             painter = StandardPainter(self.canvas_size)
-        if card.face.layout == "flip":
+        elif card.face.layout == "leveler":
+            painter = LevelerPainter(self.canvas_size)
+        elif card.face.layout == "flip":
             painter = FlipPainter(self.canvas_size)
 
         if painter is None:
