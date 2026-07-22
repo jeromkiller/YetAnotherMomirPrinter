@@ -5,12 +5,11 @@ class FlipPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
         image_height = int(self.canvas_size[0] * 2 / 4)
-        self.BottomRegion = CardRegion(self.canvas_size[1] - 10, 10)
-        text_height = int((self.canvas_size[1] - ((2 * self.TitleRegion.get_total_offset()) + (2 * (large_text_size + 4)) + image_height + self.BottomRegion.AreaHeight)) / 2)
+        text_height = int((self.canvas_size[1] - ((2 * self.TitleRegion.get_total_offset()) + (2 * large_text_size) + image_height + self.ArtistRegion.AreaHeight)) / 2)
         self.TextRegion = CardRegion(self.TitleRegion.get_total_offset(), text_height)
-        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), large_text_size + 4)
+        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), large_text_size)
         self.ImageRegion = CardRegion(self.TypeRegion.get_total_offset(), image_height)
-        
+        self.StatsRegion.HeightOffset = self.ImageRegion.HeightOffset - self.StatsRegion.AreaHeight
 
     def paint_card(self, card: MagicCard):
         assert card.face.layout == "flip"
@@ -21,9 +20,10 @@ class FlipPainter(PainterBase):
         self.paint_side(card, 0)
 
         # offset the regions
-        self.TitleRegion.HeightOffset += self.BottomRegion.AreaHeight
-        self.TextRegion.HeightOffset += self.BottomRegion.AreaHeight
-        self.TypeRegion.HeightOffset += self.BottomRegion.AreaHeight
+        self.TitleRegion.HeightOffset += self.ArtistRegion.AreaHeight
+        self.TextRegion.HeightOffset += self.ArtistRegion.AreaHeight
+        self.TypeRegion.HeightOffset += self.ArtistRegion.AreaHeight
+        self.StatsRegion.HeightOffset += self.ArtistRegion.AreaHeight
 
         # paint the reverse side
         self._rotate_180()
@@ -41,5 +41,5 @@ class FlipPainter(PainterBase):
         self._paintCost(cost)
         self._paintTitle(card.face.getFlipName(side))
         self._paintOracle(card.face.oracle[side])
-        self._paintStats(card.face.stats[0], self.TypeRegion.HeightOffset)
+        self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
         self._paintTypeline(card.face.getFlipType(side))

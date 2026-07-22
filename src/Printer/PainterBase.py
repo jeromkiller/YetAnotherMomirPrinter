@@ -33,8 +33,9 @@ class PainterBase():
         image_height = int(self.canvas_size[0] * 3 / 4)
         self.ImageRegion = CardRegion(self.TitleRegion.get_total_offset(), image_height)
         self.TypeRegion = CardRegion(self.ImageRegion.get_total_offset(), large_text_size)
-        self.BottomRegion = CardRegion(self.canvas_size[1] - (large_text_size + 4), large_text_size + 4)
-        text_height = self.BottomRegion.HeightOffset - self.TypeRegion.get_total_offset()
+        self.ArtistRegion = CardRegion(self.canvas_size[1] - 10, 10)
+        self.StatsRegion = CardRegion(self.canvas_size[1] - large_text_size - 2, large_text_size + 2)
+        text_height = self.ArtistRegion.HeightOffset - self.TypeRegion.get_total_offset()
         self.TextRegion = CardRegion(self.TypeRegion.get_total_offset(), text_height)
 
     def _reset(self):
@@ -71,7 +72,8 @@ class PainterBase():
             if wrapped.get_bbox(pos)[3] < pos[1] + area_height:
                 break
         else:
-            raise Exception("Text doesn't fit the area") #todo custom exception
+            pass
+            #raise Exception("Text doesn't fit the area") #todo custom exception
         
         self._paintText(pos, wrapped)
 
@@ -154,6 +156,5 @@ class PainterBase():
 
     def _paintArtistCredit(self, credit: str):
         artist_text = ImageText.Text("Artist: " + credit, mode="1")
-        artist_bbox = artist_text.get_bbox()
-        self._paintText((0, int(self.canvas_size[1]) - int(artist_bbox[3])), artist_text)
+        self._paintText((0, self.ArtistRegion.HeightOffset), artist_text)
     
