@@ -122,13 +122,19 @@ bmpp = BitmapPrinter.BitmapPrinter((width, height))
 #im = bmpp.paint_card(card)
 #im.save("standardTest.png", "PNG")
 
-#
-card2 = fetchCard("https://api.scryfall.com/cards/8b76ba96-9630-44fb-849e-3c3848c03876", "", set())
+# normal:   19529b2f-03f0-469d-92d4-e2a2a933d5dc
+# split:    73636ca0-2309-4bb3-9300-8bd0c0bb5b31
+# leveler:  8b76ba96-9630-44fb-849e-3c3848c03876
+# saga_1:   47c8262c-e0c6-4c1a-b1c1-3b5fe5252a9c
+# saga_2:   5e14692f-f1c3-4d7f-8baf-3248621e36fb
+# read_ahead_saga: 49aa8d4c-04e9-4f38-9786-2c9ad735dd72
+# saga_creature: 95318d85-4a08-47ac-a43d-ea83c0bea81c
+card2 = fetchCard("https://api.scryfall.com/cards/95318d85-4a08-47ac-a43d-ea83c0bea81c", "", set())
 im2 = bmpp.paint_card(card2)
 im2.save("standardTest.png", "PNG")
 im = im2
 
-if True:
+if False:
     from src.Printer import UsbPrinter
     im = im.convert("L")
     im = ImageOps.invert(im)

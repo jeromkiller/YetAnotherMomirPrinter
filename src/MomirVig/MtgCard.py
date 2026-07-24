@@ -20,10 +20,13 @@ class CardFace():
         
         card_type = face["type_line"]
         if "Saga" in card_type and "Creature" in card_type:
-                self.layout = "saga"
+            self.layout = "saga_creature"
+        elif "Saga" in card_type:
+            self.layout = "saga"
 
-        if "Creature" not in card_type and "Token" not in card_type:
-            raise CardNotCreatureException(json.get("name", "unknown"), json.get("oracle_id"))
+        # todo add creature only restriction if running in momir mode
+        #if "Creature" not in card_type and "Token" not in card_type:
+        #    raise CardNotCreatureException(json.get("name", "unknown"), json.get("oracle_id"))
         
         self.name: str = face.get("name", "")
         self.cost: str = face.get("mana_cost", "")
@@ -37,7 +40,7 @@ class CardFace():
         if self.layout == "flip":
             self.oracle = [f["oracle_text"] for f in json["card_faces"]]
             self.stats = [f"{f.get("power", "")}/{f.get("toughness", "")}" for f in json["card_faces"]]
-        elif self.layout == "saga":
+        elif self.layout == "saga" or self.layout == "saga_creature":
             oracle_parts = json["oracle_text"].split("\n")
             i = 0
             new_oracle = "" 
@@ -52,7 +55,11 @@ class CardFace():
                     new_oracle += "\n" + part
                 else:
                     new_oracle += part
+
             self.oracle.append(new_oracle)
+            # saga creatures only flavor text in their textbox need a extra newline at the end so it gets split into an empty string
+            if self.layout == "saga_creature" and "—" in oracle_parts[-1]:
+                self.oracle.append("")
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
         elif self.layout == "leveler":
             oracle_parts = face["oracle_text"].split("\n")
@@ -108,7 +115,7 @@ class TokenFace(CardFace):
 class MagicCard():
     def __init__(self, json):
         self.face = CardFace(json)
-        self.image: None | ImageFile.ImageFile = None
+        self.image: None | ImageFile.ImageFile | Image.Image = None
         self.extras = list[MagicCard]()
     
     def print_card(self):

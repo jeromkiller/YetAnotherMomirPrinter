@@ -3,6 +3,8 @@ from ..MomirVig.MtgCard import MagicCard
 from .StandardPainter import StandardPainter
 from .FlipPainter import FlipPainter
 from .LevelerPainter import LevelerPainter
+from .SagaPainter import SagaPainter
+from .SagaCreaturePainter import SagaCreaturePainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -29,6 +31,10 @@ class BitmapPrinter():
             painter = LevelerPainter(self.canvas_size)
         elif card.face.layout == "flip":
             painter = FlipPainter(self.canvas_size)
+        elif card.face.layout == "saga":
+            painter = SagaPainter(self.canvas_size)
+        elif card.face.layout == "saga_creature":
+            painter = SagaCreaturePainter(self.canvas_size)
 
         if painter is None:
             raise TypeError

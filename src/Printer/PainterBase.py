@@ -58,24 +58,9 @@ class PainterBase():
         for bbox in self.obscured_areas:
             self.draw.rectangle(bbox)
 
-    def _paintWrappedText(self, pos: tuple[int, int], text: str, font_size: int, area_height: int, decor: Decoration | None = None):
-        font_path = "Font/Swansea-q3pd.ttf"
-        if decor:
-            if Decoration.BOLD in decor:
-                font_path = "Font/SwanseaBold-D0ox.ttf"
-        
-        # try to print the font, shrink if it doesn't fit
-        wrapped = None
-        for font_size in range(font_size, 9, -1):
-            font = ImageFont.truetype(font_path, font_size)
-            wrapped = self._wrapText(pos, text, font, area_height)
-            if wrapped.get_bbox(pos)[3] < pos[1] + area_height:
-                break
-        else:
-            pass
-            #raise Exception("Text doesn't fit the area") #todo custom exception
-        
-        self._paintText(pos, wrapped)
+    def _paintWrappedText(self, pos: tuple[int, int], text: str, font_size: int, area_height: int, decor: Decoration | None = None) -> tuple[float, float, float, float]:
+        wrapped = self._wrapAndResizeText(pos, text, font_size, area_height, decor)
+        return self._paintText(pos, wrapped)
 
     def _paintText(self, pos: tuple[int, int], text: ImageText.Text) -> tuple[float, float, float, float]:
         self.draw.text(pos, text)
@@ -100,7 +85,7 @@ class PainterBase():
                 return True
         return box[2] > self.canvas.width
 
-    def _wrapText(self, pos: tuple[int, int], string: str, font: ImageFont.BaseImageFont, area_height: int):
+    def _wrapText(self, pos: tuple[int, int], string: str, font: ImageFont.BaseImageFont, area_height: int) -> ImageText.Text[str]:
         text_block = ImageText.Text("", font, mode="1")
         text_line = ImageText.Text("", font, mode="1")
 
@@ -123,6 +108,24 @@ class PainterBase():
             else:
                 text_block.text += word
         return text_block
+    
+    def _wrapAndResizeText(self, pos: tuple[int, int], text: str, font_size: int, area_height: int, decor: Decoration | None = None) -> ImageText.Text[str]:
+        font_path = "Font/Swansea-q3pd.ttf"
+        if decor:
+            if Decoration.BOLD in decor:
+                font_path = "Font/SwanseaBold-D0ox.ttf"
+        
+        # try to print the font, shrink if it doesn't fit
+        wrapped = None
+        for font_size in range(font_size, 9, -1):
+            font = ImageFont.truetype(font_path, font_size)
+            wrapped = self._wrapText(pos, text, font, area_height)
+            if wrapped.get_bbox(pos)[3] < pos[1] + area_height:
+                break
+        else:
+            pass
+            #raise Exception("Text doesn't fit the area") #todo custom exception
+        return wrapped
 
     def _paintTitle(self, card_name: str):
         self._paintWrappedText((0, self.TitleRegion.HeightOffset), card_name, large_text_size, self.TitleRegion.AreaHeight, Decoration.BOLD)
@@ -138,7 +141,6 @@ class PainterBase():
 
     def _paintImage(self, card: MagicCard):
         if card.image is not None:
-            # For now just put a rectangle in of the right size
             im = card.image
             im = ImageOps.fit(im, (self.canvas_size[0], self.ImageRegion.AreaHeight))
             im = im.convert("1")
