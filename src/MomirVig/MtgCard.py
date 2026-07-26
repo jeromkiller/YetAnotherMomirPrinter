@@ -9,7 +9,8 @@ class CardFace():
     def __init__(self, json):
         face = json
         self.layout: str = json["layout"]
-        if "card_faces" in json and json["layout"] != "flip":
+        # only take the front face of transform cards
+        if "card_faces" in json and json["layout"] not in ["flip", "prepare", "adventure", "split"]:
             face = json["card_faces"][0]
             card_type = face["type_line"]
             if "Creature" in card_type:
@@ -40,6 +41,9 @@ class CardFace():
         if self.layout == "flip":
             self.oracle = [f["oracle_text"] for f in json["card_faces"]]
             self.stats = [f"{f.get("power", "")}/{f.get("toughness", "")}" for f in json["card_faces"]]
+        if self.layout == "prepare":
+            self.oracle = [f["oracle_text"] for f in json["card_faces"]]
+            self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
         elif self.layout == "saga" or self.layout == "saga_creature":
             oracle_parts = json["oracle_text"].split("\n")
             i = 0
@@ -90,6 +94,9 @@ class CardFace():
     
     def getFlipType(self, index: int):
         return list(self.type.split(" // "))[index]
+    
+    def getFlipCost(self, index: int):
+        return list(self.cost.split(" // "))[index]
 
 class NormalFace(CardFace):
     def __init__(self, json):
