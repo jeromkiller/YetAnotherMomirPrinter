@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw, ImageText, ImageOps, ImageFile
+from PIL import Image, ImageFont, ImageDraw, ImageText, ImageOps
 from ..MomirVig.MtgCard import MagicCard
 from .TextDecorators import Decoration
 

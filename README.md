@@ -4,8 +4,8 @@ A python project to play 'Momir Basic' on paper through the magic of scryfall an
 ## Usage
 Dependencies:
  - pillow
- - numpy
- - pyusb
+ - requests
+ - python-escpos
 
 To get a random card, plug in your Epson TM-T88V and use the following command:
 

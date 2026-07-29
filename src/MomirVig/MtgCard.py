@@ -1,7 +1,3 @@
-from . import ProcessImage
-
-import matplotlib.image as img
-import numpy as np
 from PIL import Image, ImageFile
 from .exceptions import CardNotCreatureException
 

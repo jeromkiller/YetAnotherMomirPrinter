@@ -1,8 +1,6 @@
 from . import MtgCard
-from . import ProcessImage
 import requests
 import time
-import matplotlib.image as img
 from PIL import Image, ImageFile
 from . import exceptions
 
@@ -71,7 +69,9 @@ def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.Magic
 
     if response.status_code == 404:
         raise exceptions.CardNotFoundException()
-    if response.status_code != 200:
+    elif response.status_code == 503:
+        raise exceptions.UnhandledStatusCodeException(response.reason, response.status_code)
+    elif response.status_code != 200:
         raise exceptions.UnhandledStatusCodeException(response.json().get("details", "Unknown"), response.status_code)
 
     print(f"fetched: {response.json().get("scryfall_uri", "")}")
