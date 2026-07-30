@@ -12,7 +12,7 @@ class CardFace():
             if "Creature" in card_type:
                 self.layout = "normal"
 
-        if self.layout in ["host", "token", "mutate", "prototype", "meld", "double_faced_token", "emblem"]:
+        if self.layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
             self.layout = "normal"
         
         card_type = face["type_line"]
@@ -81,6 +81,16 @@ class CardFace():
                     new_oracle += "\n" + oracle_parts[i]
                     i += 1
             self.oracle.append(new_oracle)
+        elif self.layout == "prototype":
+            oracle_text = face.get("oracle_text", "")
+            prototype_section = oracle_text.split("\n")[0]
+            prototype_parts = prototype_section.split(" ")
+            self.oracle.append(prototype_parts[0])
+            self.oracle.append(prototype_parts[1])
+            self.oracle[0] += " " + " ".join(prototype_parts[4:])
+            self.oracle.append(face.get("oracle_text", "").lstrip(prototype_section + "\n"))
+            self.stats.append(prototype_parts[3])
+            self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
         else:
             self.oracle = [face.get("oracle_text", "")]
             self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]

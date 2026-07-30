@@ -6,6 +6,7 @@ from .LevelerPainter import LevelerPainter
 from .SagaPainter import SagaPainter
 from .SagaCreaturePainter import SagaCreaturePainter
 from .PreparedPainter import PreparedPainter
+from .PrototypePainter import PrototypePainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -38,6 +39,8 @@ class BitmapPrinter():
             painter = SagaCreaturePainter(self.canvas_size)
         elif card.face.layout == "prepare":
             painter = PreparedPainter(self.canvas_size)
+        elif card.face.layout == "prototype":
+            painter = PrototypePainter(self.canvas_size)
 
         if painter is None:
             raise TypeError

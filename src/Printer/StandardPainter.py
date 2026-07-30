@@ -9,6 +9,6 @@ class StandardPainter(PainterBase):
         self._paintTitle(card.face.name)
         self._paintImage(card)
         self._paintTypeline(card.face.type)
-        self._paintOracle(card.face.oracle[0])
         self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
+        self._paintOracle(card.face.oracle[0])
         self._paintArtistCredit(card.face.image_credit)
