@@ -134,6 +134,9 @@ class PainterBase():
         self._paintRightJustifiedText((0, self.TitleRegion.HeightOffset), cost, self.TitleRegion.AreaHeight, Decoration.BOLD)
 
     def _paintStats(self, stats:str, height: int):
+        if not stats:
+            return
+        
         bbox = self._paintRightJustifiedText((5, height), stats, 25, Decoration.BOLD)
         border = (bbox[0] - 4, bbox[1] - 3, bbox[2] + 3, bbox[3] + 3)
         self.draw.rounded_rectangle(border, 6)

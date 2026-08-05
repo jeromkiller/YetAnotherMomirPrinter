@@ -228,8 +228,8 @@ class MagicCard():
 
         self.front_face, offset = self.create_face(json, 0)
         self.back_face: CardFace | None = None
-        if self.layout in ["transform", "split", "modal_dfc", "battle"]:
-            self.back_face = CardFace(json, offset)
+        if self.layout in ["transform", "modal_dfc", "battle"]:
+            self.back_face, offset = self.create_face(json, offset)
 
         self.extras = list[MagicCard]()
 
@@ -240,7 +240,15 @@ class MagicCard():
         if layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
             layout = "normal"
 
-        type = json["type_line"]
+        face = CardFace.get_face(json, card_part_offset)
+        type = face["type_line"]
+        keywords = json.get("keywords", [])
+        if layout == "transform":
+            if "Saga" in type:
+                layout = "saga"
+            else:
+                layout = "normal"
+        
         if layout == "normal":
             if "Spacecraft" in type:
                 layout = "unsupported"

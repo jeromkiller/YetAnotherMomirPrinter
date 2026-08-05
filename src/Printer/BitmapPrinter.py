@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 from ..MomirVig.MtgCard import *
 from .StandardPainter import StandardPainter
 from .FlipPainter import FlipPainter
@@ -27,9 +27,17 @@ class BitmapPrinter():
         self.canvas_size = (canvas_size[0], canvas_size[1])
 
     def paint_card(self, card: MagicCard) -> Image.Image:
-        #self._reset()
-        return self.paint_face(card.front_face)
-    
+        canvas = self.paint_face(card.front_face)
+        if card.back_face:
+            front_face = canvas
+            back_face = self.paint_face(card.back_face)
+            canvas = Image.new("1", (self.canvas_size[0] * 2 + 40, self.canvas_size[1]), color=1) #canvas.crop((0, 0, card_width * 2 + 40, canvas.height)
+            canvas.paste(front_face, (0, 0))
+            canvas.paste(back_face, (canvas.width - back_face.width, 0))
+            draw = ImageDraw.Draw(canvas)
+            draw.line([(front_face.width + 20, 0), (front_face.width + 20, front_face.height)])
+
+        return canvas
 
     def paint_face(self, face: CardFace) -> Image.Image:
         if isinstance(face, DefaultFace):
