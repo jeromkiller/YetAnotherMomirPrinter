@@ -1,15 +1,16 @@
 from PIL import Image, ImageFont, ImageDraw, ImageText, ImageOps
 from ..MomirVig.MtgCard import MagicCard
 from .TextDecorators import Decoration
+from dataclasses import dataclass
 
 large_text_size = 20
 normal_text_size = 15
 tiny_text_size = 10
 
+@dataclass
 class CardRegion():
-    def __init__(self, HeightOffset: int, AreaHeight: int):
-        self.HeightOffset = HeightOffset
-        self.AreaHeight = AreaHeight
+    HeightOffset: int
+    AreaHeight: int
     
     def get_total_offset(self) -> int: 
         return self.HeightOffset + self.AreaHeight

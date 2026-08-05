@@ -1,7 +1,6 @@
 from .PainterBase import *
 from ..MomirVig.MtgCard import SagaFace, SagaSection
 from PIL.ImageFont import FreeTypeFont
-from typing import overload
 
 class SagaPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):

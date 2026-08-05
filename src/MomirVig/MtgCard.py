@@ -2,6 +2,8 @@ from PIL import Image, ImageFile
 from .exceptions import CardNotCreatureException, CardNotParsableException
 from dataclasses import dataclass
 from typing import TypeAlias
+import re
+
 class CardFace():
     @staticmethod
     def get_face(json, card_part_offset: int):
@@ -188,6 +190,33 @@ class PrepareFace(DualSpellFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
 
+@dataclass(frozen=True)
+class PlaneswalkerAbilityBlock():
+    cost: int
+    oracle: str
+
+class PlaneswalkerFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.loyalty: str = face.get("loyalty", "")
+
+        self.abilities: list[str | PlaneswalkerAbilityBlock] = list()
+        for line in face.get("oracle_text", "").split("\n"):
+            starting_number_list = re.findall(r"^[+−-]?\d+: ", line)
+            if starting_number_list:
+                starting_number = starting_number_list[0]
+                oracle = line.strip(starting_number)
+                starting_number = starting_number.replace("−", "-")
+                self.abilities.append(PlaneswalkerAbilityBlock(int(starting_number.strip(": ")), oracle))
+            else:
+                self.abilities.append(line)
+
 class MagicCard():
     def __init__(self, json):
         # figure out the card type
@@ -216,7 +245,7 @@ class MagicCard():
             if "Spacecraft" in type:
                 layout = "unsupported"
             elif "Planeswalker" in type:
-                layout = "unsupported"
+                layout = "planeswalker"
 
         if layout == "normal":
             return DefaultFace(json, card_part_offset), card_part_offset+ 1
@@ -235,6 +264,8 @@ class MagicCard():
             return PrepareFace(json, card_part_offset), card_part_offset + 2
         elif layout == "prototype":
             return PrototypeFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "planeswalker":
+            return PlaneswalkerFace(json, card_part_offset), card_part_offset + 1
         
         raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 

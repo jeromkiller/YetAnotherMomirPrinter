@@ -8,6 +8,7 @@ from .SagaCreaturePainter import SagaCreaturePainter
 from .PreparedPainter import PreparedPainter
 from .PrototypePainter import PrototypePainter
 from .AdventurePainter import AdventurePainter
+from .PlaneswalkerPainter import PlaneswalkerPainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -63,6 +64,11 @@ class BitmapPrinter():
             painter = PrototypePainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
+        elif isinstance(face, PlaneswalkerFace):
+            painter = PlaneswalkerPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+
         
         raise TypeError
         
