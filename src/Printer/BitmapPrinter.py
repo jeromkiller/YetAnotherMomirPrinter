@@ -7,6 +7,7 @@ from .SagaPainter import SagaPainter
 from .SagaCreaturePainter import SagaCreaturePainter
 from .PreparedPainter import PreparedPainter
 from .PrototypePainter import PrototypePainter
+from .AdventurePainter import AdventurePainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -52,6 +53,10 @@ class BitmapPrinter():
             return painter.canvas
         elif isinstance(face, PrepareFace):
             painter = PreparedPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, AdventureFace):
+            painter = AdventurePainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
         elif isinstance(face, PrototypeFace):

@@ -180,8 +180,13 @@ class DualSpellFace(CardFace):
         self.spell_1: DefaultFace = DefaultFace(json, card_part_offset)
         self.spell_2: DefaultFace = DefaultFace(json, card_part_offset + 1)
 
-AdventureFace: TypeAlias = DualSpellFace
-PrepareFace: TypeAlias = DualSpellFace
+class AdventureFace(DualSpellFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+
+class PrepareFace(DualSpellFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
 
 class MagicCard():
     def __init__(self, json):
