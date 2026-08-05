@@ -1,14 +1,12 @@
 from .PainterBase import PainterBase
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import DefaultFace
 
 class StandardPainter(PainterBase):
-    def paint_card(self, card:MagicCard):
-        assert card.face.layout == "normal"
-
-        self._paintCost(card.face.cost)
-        self._paintTitle(card.face.name)
-        self._paintImage(card)
-        self._paintTypeline(card.face.type)
-        self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
-        self._paintOracle(card.face.oracle[0])
-        self._paintArtistCredit(card.face.image_credit)
+    def paint_card(self, face:DefaultFace):
+        self._paintCost(face.cost)
+        self._paintTitle(face.name)
+        self._paintImage(face.image)
+        self._paintTypeline(face.type)
+        self._paintStats(face.stats, self.StatsRegion.HeightOffset)
+        self._paintOracle(face.oracle)
+        self._paintArtistCredit(face.image_credit)

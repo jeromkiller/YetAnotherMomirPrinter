@@ -1,5 +1,5 @@
 from .PainterBase import *
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import PrototypeFace
 
 class PrototypePainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -10,23 +10,21 @@ class PrototypePainter(PainterBase):
         self.dividerLine = CardRegion(self.prototypeExplainerSection.get_total_offset(), 3)
         self.TextRegion = CardRegion(self.dividerLine.get_total_offset(), self.TextRegion.AreaHeight - self.prototypeExplainerSection.AreaHeight)
 
-    def paint_card(self, card: MagicCard):
-        assert card.face.layout == "prototype"
+    def paint_card(self, face: PrototypeFace):
+        self._paintArtistCredit(face.image_credit)
+        self._paintCost(face.cost)
+        self._paintTitle(face.name)
+        self._paintImage(face.image)
+        self._paintTypeline(face.type)
 
-        self._paintArtistCredit(card.face.image_credit)
-        self._paintCost(card.face.cost)
-        self._paintTitle(card.face.name)
-        self._paintImage(card)
-        self._paintTypeline(card.face.type)
-
-        self._paintStats(card.face.stats[0], self.prototypeStatSection.HeightOffset)
-        self._paint_prototype_cost(card.face.oracle[1])
-        self._paint_prototype_oracle(card.face.oracle[0])
+        self._paintStats(face.prototype_stats, self.prototypeStatSection.HeightOffset)
+        self._paint_prototype_cost(face.prototype_cost)
+        self._paint_prototype_oracle(face.prototype_oracle)
 
         self.draw.line((0, self.dividerLine.HeightOffset, self.canvas_size[0], self.dividerLine.HeightOffset))
 
-        self._paintStats(card.face.stats[1], self.StatsRegion.HeightOffset)
-        self._paintOracle(card.face.oracle[2])
+        self._paintStats(face.stats, self.StatsRegion.HeightOffset)
+        self._paintOracle(face.oracle)
 
     def _paint_prototype_cost(self, cost: str):
         bbox = self._paintRightJustifiedText((0, self.prototypeCostSection.HeightOffset + 1), cost, self.prototypeCostSection.AreaHeight, Decoration.BOLD)

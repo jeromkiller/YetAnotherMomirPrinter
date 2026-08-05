@@ -1,5 +1,5 @@
 from .PainterBase import *
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import PrepareFace
 
 class PreparedPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -10,24 +10,22 @@ class PreparedPainter(PainterBase):
         oracle_text_height = self.ArtistRegion.HeightOffset - self.PrepareTypeRegion.get_total_offset()
         self.PrepareOracle = CardRegion(self.PrepareTypeRegion.get_total_offset(), oracle_text_height)
     
-    def paint_card(self, card:MagicCard):
-        assert card.face.layout == "prepare"
+    def paint_card(self, face:PrepareFace):
+        self._paintCost(face.spell_1.cost)
+        self._paintTitle(face.spell_1.name)
+        self._paintImage(face.image)
+        self._paintTypeline(face.spell_1.type)
+        self._paintStats(face.spell_1.stats, self.StatsRegion.HeightOffset)
 
-        self._paintCost(card.face.getFlipCost(0))
-        self._paintTitle(card.face.getFlipName(0))
-        self._paintImage(card)
-        self._paintTypeline(card.face.getFlipType(0))
-        self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
-
-        self._paintPrepareCost(card.face.getFlipCost(1))
-        self._paintPrepareTitle(card.face.getFlipName(1))
-        self._paintPrepareTypeline(card.face.getFlipType(1))
-        self._paintPrepareOracle(card.face.oracle[1])
+        self._paintPrepareCost(face.spell_2.cost)
+        self._paintPrepareTitle(face.spell_2.name)
+        self._paintPrepareTypeline(face.spell_2.type)
+        self._paintPrepareOracle(face.spell_2.oracle)
 
         self._drawDividerLine()
 
-        self._paintOracle(card.face.oracle[0])
-        self._paintArtistCredit(card.face.image_credit)
+        self._paintOracle(face.spell_1.oracle)
+        self._paintArtistCredit(face.image_credit)
 
     def _getPrepareHorizontalOffset(self) -> int:
         return int(self.canvas_size[0] / 2)

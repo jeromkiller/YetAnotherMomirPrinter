@@ -1,141 +1,244 @@
 from PIL import Image, ImageFile
-from .exceptions import CardNotCreatureException
-
+from .exceptions import CardNotCreatureException, CardNotParsableException
+from dataclasses import dataclass
+from typing import TypeAlias
 class CardFace():
-    def __init__(self, json):
+    @staticmethod
+    def get_face(json, card_part_offset: int):
         face = json
-        self.layout: str = json["layout"]
-        # only take the front face of transform cards
-        if "card_faces" in json and json["layout"] not in ["flip", "prepare", "adventure", "split"]:
-            face = json["card_faces"][0]
-            card_type = face["type_line"]
-            if "Creature" in card_type:
-                self.layout = "normal"
+        if "card_faces" in json:
+            face = json["card_faces"][card_part_offset]
+        return face
 
-        if self.layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
-            self.layout = "normal"
-        
-        card_type = face["type_line"]
-        if "Saga" in card_type and "Creature" in card_type:
-            self.layout = "saga_creature"
-        elif "Saga" in card_type:
-            self.layout = "saga"
+    def __init__(self, json, card_part_offset: int):
+        face = self.get_face(json, card_part_offset)
 
-        # todo add creature only restriction if running in momir mode
-        #if "Creature" not in card_type and "Token" not in card_type:
-        #    raise CardNotCreatureException(json.get("name", "unknown"), json.get("oracle_id"))
-        
+        self.image_url: str = ""
+        if "image_uris" in face:
+            self.image_url = face.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
+        else:
+            self.image_url = json.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
+
+        self.image_credit: str = ""
+        if "artist" in face:
+            self.image_credit: str = face.get("artist", "")
+        else:
+            self.image_credit: str = json.get("artist", "")
+
+        self.image: None | ImageFile.ImageFile | Image.Image = None
+
+        self.identity: str = "".join(map(str, json.get("color_identity", [])))
+
+class DefaultFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+
         self.name: str = face.get("name", "")
         self.cost: str = face.get("mana_cost", "")
-        self.identity: str = "".join(map(str, face.get("colors", [])))
-        self.image_url: str = face.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
-        self.image_credit: str = face.get("artist", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
         self.type: str = face.get("type_line", "")
+        self.oracle: str = face.get("oracle_text", "")
+        self.stats: str = ""
+        if "power" in face and "toughness" in face:
+            self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
 
-        self.oracle = list[str]()
-        self.stats = list[str]()
-        if self.layout == "flip":
-            self.oracle = [f["oracle_text"] for f in json["card_faces"]]
-            self.stats = [f"{f.get("power", "")}/{f.get("toughness", "")}" for f in json["card_faces"]]
-        if self.layout == "prepare":
-            self.oracle = [f["oracle_text"] for f in json["card_faces"]]
-            self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
-        elif self.layout == "saga" or self.layout == "saga_creature":
-            oracle_parts = json["oracle_text"].split("\n")
-            i = 0
-            new_oracle = "" 
-            for i, part in enumerate(oracle_parts):
-                if i == 0:
-                    new_oracle = part
-                    continue
-                if "•" not in part:
-                    self.oracle.append(new_oracle)
-                    new_oracle = ""
-                if new_oracle:
-                    new_oracle += "\n" + part
-                else:
-                    new_oracle += part
+@dataclass(frozen=True)
+class level_block():
+    level: str
+    oracle: str
+    stats: str
 
-            self.oracle.append(new_oracle)
-            # saga creatures only flavor text in their textbox need a extra newline at the end so it gets split into an empty string
-            if self.layout == "saga_creature" and "—" in oracle_parts[-1]:
-                self.oracle.append("")
-            self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
-        elif self.layout == "leveler":
-            oracle_parts = face["oracle_text"].split("\n")
-            i = 0
-            new_oracle = ""
-            while i < len(oracle_parts):
-                if i == 0:
-                    self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
-                    new_oracle += oracle_parts[i]
-                    i += 1
-                    continue
-                part = oracle_parts[i]
-                if "LEVEL" in part:
-                    self.oracle.append(new_oracle)
-                    new_oracle = part
-                    self.stats.append(oracle_parts[i + 1])
-                    i += 2
-                else:
-                    new_oracle += "\n" + oracle_parts[i]
-                    i += 1
-            self.oracle.append(new_oracle)
-        elif self.layout == "prototype":
-            oracle_text = face.get("oracle_text", "")
-            prototype_section = oracle_text.split("\n")[0]
-            prototype_parts = prototype_section.split(" ")
-            self.oracle.append(prototype_parts[0])
-            self.oracle.append(prototype_parts[1])
-            self.oracle[0] += " " + " ".join(prototype_parts[4:])
-            self.oracle.append(face.get("oracle_text", "").lstrip(prototype_section + "\n"))
-            self.stats.append(prototype_parts[3])
-            self.stats.append(f"{face.get("power", "")}/{face.get("toughness", "")}")
-        else:
-            self.oracle = [face.get("oracle_text", "")]
-            self.stats = [f"{face.get("power", "")}/{face.get("toughness", "")}"]
+class LevelerFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
 
-    def getFlipName(self, index: int):
-        return list(self.name.split(" // "))[index]
-    
-    def getFlipType(self, index: int):
-        return list(self.type.split(" // "))[index]
-    
-    def getFlipCost(self, index: int):
-        return list(self.cost.split(" // "))[index]
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.levels: list[level_block] = list()
 
-class NormalFace(CardFace):
-    def __init__(self, json):
-        super().__init__(json)
+        oracle = ""
+        level = ""
+        stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+        for part in face.get("oracle_text", "").split("\n"):
+            if "LEVEL" in part:
+                self.levels.append(level_block(level, oracle, stats))
+                oracle = ""
+                stats = ""
+                level = part
+            elif stats == "":
+                stats = part
+            elif oracle == "":
+                oracle = part
+            else:
+                oracle += "\n" + part
+        self.levels.append(level_block(level, oracle, stats))
 
-class LevelUpFace(CardFace):
-    def __init__(self, json):
-        super().__init__(json)
-
-class SagaCreatureFace(CardFace):
-    def __init__(self, json):
-        super().__init__(json)
+class FlipSide():
+    def __init__(self, part):
+        self.name: str = part.get("name", "")
+        self.cost: str = part.get("mana_cost", "")
+        self.oracle: str = part.get("oracle_text")
+        self.type: str = part.get("type_line", "")
+        self.stats = ""
+        if "power" in part and "toughness" in part:
+            self.stats = f"{part.get("power", "")}/{part.get("toughness", "")}"
 
 class FlipFace(CardFace):
-    def __init__(self, json):
-        super().__init__(json["card_faces"][0])
-        secondFace = CardFace(json["card_faces"][1])
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        self.colors: str = "".join(map(str, json.get("colors", [])))
+        self.up_side: FlipSide = FlipSide(self.get_face(json, card_part_offset))
+        self.down_side: FlipSide = FlipSide(self.get_face(json, card_part_offset + 1))
 
-class TokenFace(CardFace):
-    def __init__(self, json):
-        super().__init__(json)
+@dataclass(frozen=True)
+class SagaSection():
+    levels: list[str]
+    oracle: str
+
+class SagaFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+        self.name: str = face
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+
+        oracle_parts = json["oracle_text"].split("\n")
+        self.explainer: str = oracle_parts[0]
+
+        i = 0
+        self.saga_sections: list[SagaSection] = list()
+        new_oracle = "" 
+        for i, part in enumerate(oracle_parts):
+            if i == 0:
+                new_oracle = part
+                continue
+            if "•" not in part:
+                sections = list(new_oracle.split(" — ", 1))
+                if len(sections) == 1:
+                    self.explainer = sections[0]
+                else:
+                    levels: list[str] = list(sections[0].split(", "))
+                    oracle: str = sections[1]
+                    self.saga_sections.append(SagaSection(levels, oracle))
+                new_oracle = ""
+            if new_oracle:
+                new_oracle += "\n" + part
+            else:
+                new_oracle += part
+
+        sections = list(new_oracle.split(" — ", 1))
+        if len(sections) > 2:
+            levels: list[str] = list(sections[0].split(", "))
+            oracle: str = sections[1]
+            self.saga_sections.append(SagaSection(levels, oracle))
+
+class SagaCreatureFace(SagaFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+        oracle_parts = list(face["oracle_text"].split("\n"))
+        self.oracle: str = oracle_parts[-1]
+        self.stats: str = ""
+        if "power" in face and "toughness" in face:
+            self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+
+class PrototypeFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.stats: str = ""
+        if "power" in face and "toughness" in face:
+            self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+
+        oracle_parts = face.get("oracle_text", "").split("\n", 1)
+
+        prototype_section = oracle_parts[0]
+        prototype_split = prototype_section.split(" — ", 1)
+        prototype_cost_parts = prototype_split[0].split(" ")
+        prototype_stats_parts = prototype_split[1].split(" ")
+
+        self.prototype_cost: str = prototype_cost_parts[-1]
+        self.prototype_stats: str = prototype_stats_parts[0]
+        self.prototype_oracle: str = " ".join(prototype_cost_parts[:-1]) + " " + " ".join(prototype_stats_parts[1:])
+
+        self.oracle: str = oracle_parts[1]
+class DualSpellFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        self.spell_1: DefaultFace = DefaultFace(json, card_part_offset)
+        self.spell_2: DefaultFace = DefaultFace(json, card_part_offset + 1)
+
+AdventureFace: TypeAlias = DualSpellFace
+PrepareFace: TypeAlias = DualSpellFace
 
 class MagicCard():
     def __init__(self, json):
-        self.face = CardFace(json)
-        self.image: None | ImageFile.ImageFile | Image.Image = None
+        # figure out the card type
+        self.layout = json["layout"]
+
+        # treat these special kinds of cards as regular for now
+        if self.layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
+            self.layout = "normal"
+
+        self.front_face, offset = self.create_face(json, 0)
+        self.back_face: CardFace | None = None
+        if self.layout in ["transform", "split", "modal_dfc", "battle"]:
+            self.back_face = CardFace(json, offset)
+
         self.extras = list[MagicCard]()
-    
-    def print_card(self):
-        pass
+
+    @staticmethod
+    def create_face(json, card_part_offset: int) -> tuple[CardFace, int]:
+        layout = json["layout"]
+        # treat these special kinds of cards as regular for now
+        if layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
+            layout = "normal"
+
+        type = json["type_line"]
+        if layout == "normal":
+            if "Spacecraft" in type:
+                layout = "unsupported"
+            elif "Planeswalker" in type:
+                layout = "unsupported"
+
+        if layout == "normal":
+            return DefaultFace(json, card_part_offset), card_part_offset+ 1
+        elif layout == "leveler":
+            return LevelerFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "flip":
+            return FlipFace(json, card_part_offset), card_part_offset + 2
+        elif layout == "saga":
+            if "Creature" in type:
+                return SagaCreatureFace(json, card_part_offset), card_part_offset + 1
+            else:
+                return SagaFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "adventure":
+            return AdventureFace(json, card_part_offset), card_part_offset + 2
+        elif layout == "prepare":
+            return PrepareFace(json, card_part_offset), card_part_offset + 2
+        elif layout == "prototype":
+            return PrototypeFace(json, card_part_offset), card_part_offset + 1
+        
+        raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 
     def setImage(self, image: ImageFile.ImageFile):
-        self.image = image
+        self.front_face.image = image
+
+    def setImage2(self, image: ImageFile.ImageFile):
+        if self.back_face:
+            self.back_face.image = image
 
     def addExtraCard(self, extra: 'MagicCard'):
         self.extras.append(extra)

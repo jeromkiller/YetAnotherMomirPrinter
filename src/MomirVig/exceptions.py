@@ -13,3 +13,9 @@ class CardNotCreatureException(Exception):
         self.name = name
         self.oracle_id = oracle_id
         super().__init__(f"The {name} card does not have a creature on its front face")
+
+class CardNotParsableException(Exception):
+    def __init__(self, name, oracle_id) -> None:
+        self.name = name
+        self.oracle_id = oracle_id
+        super().__init__(f"The {name} card isn't parsable in this version of the library")

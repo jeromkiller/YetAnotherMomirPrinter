@@ -1,5 +1,6 @@
 from .SagaPainter import *
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import SagaCreatureFace
+from typing import overload
 
 class SagaCreaturePainter(SagaPainter):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -10,26 +11,34 @@ class SagaCreaturePainter(SagaPainter):
         saga_text_height = self.TypeRegion.HeightOffset - self.ExplainerRegion.get_total_offset()
         self.SagaTextRegion = CardRegion(self.ExplainerRegion.get_total_offset(), saga_text_height)
         self.ImageRegion = CardRegion(self.SagaTextRegion.HeightOffset, self.SagaTextRegion.AreaHeight)
+   
+    @overload
+    def paint_card(self, face: SagaCreatureFace): ...
+
+    @overload
+    def paint_card(self, face: SagaFace): ...
+
+    def paint_card(self, face: SagaFace | SagaCreatureFace):
+        if not isinstance(face, SagaCreatureFace):
+            super().paint_card(face)
+            return
         
-    def paint_card(self, card: MagicCard):
-        assert card.face.layout == "saga_creature"
+        self._paintArtistCredit(face.image_credit)
 
-        self._paintArtistCredit(card.face.image_credit)
-
-        self._paintCost(card.face.cost)
-        self._paintTitle(card.face.name)
-        self._paintImage(card)
-        self._paintExplainer(card.face.oracle[0])
+        self._paintCost(face.cost)
+        self._paintTitle(face.name)
+        self._paintImage(face.image)
+        self._paintExplainer(face.explainer)
         self.SagaTextRegion = CardRegion(self.ImageRegion.HeightOffset, self.ImageRegion.AreaHeight)
-        self._paintSagaText(card.face.oracle[1:-1])
-        self._paintTypeline(card.face.type)
-        self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
-        self._paintOracle(card.face.oracle[-1])
+        self._paintSagaText(face.saga_sections)
+        self._paintTypeline(face.type)
+        self._paintStats(face.stats, self.StatsRegion.HeightOffset)
+        self._paintOracle(face.oracle)
 
-    def _paintImage(self, card: MagicCard):      
-        if card.image is not None:
-            w, h = card.image.size
+    def _paintImage(self, image: Image.Image | None = None):      
+        if image is not None:
+            w, h = image.size
             crop_top = h * 0.13
             crop_bot = h * 0.11
-            card.image = card.image.crop((0, crop_top, w, h - crop_bot))
-        super()._paintImage(card)
+            image = image.crop((0, crop_top, w, h - crop_bot))
+        super()._paintImage(image)

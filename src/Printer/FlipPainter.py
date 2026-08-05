@@ -1,5 +1,5 @@
 from .PainterBase import *
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import FlipFace, FlipSide
 
 class FlipPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -11,13 +11,12 @@ class FlipPainter(PainterBase):
         self.ImageRegion = CardRegion(self.TypeRegion.get_total_offset(), image_height)
         self.StatsRegion.HeightOffset = self.ImageRegion.HeightOffset - self.StatsRegion.AreaHeight
 
-    def paint_card(self, card: MagicCard):
-        assert card.face.layout == "flip"
-        self._paintArtistCredit(card.face.image_credit)
-        self._paintImage(card)
+    def paint_card(self, face: FlipFace):
+        self._paintArtistCredit(face.image_credit)
+        self._paintImage(face.image)
 
         #self._paintBottom(card.face.image_credit, "")
-        self.paint_side(card, 0)
+        self.paint_side(face.up_side)
 
         # offset the regions
         self.TitleRegion.HeightOffset += self.ArtistRegion.AreaHeight
@@ -27,19 +26,15 @@ class FlipPainter(PainterBase):
 
         # paint the reverse side
         self._rotate_180()
-        self.paint_side(card, 1)
+        self.paint_side(face.down_side)
 
         # flip the card back
         self._rotate_180()
         
 
-    def paint_side(self, card: MagicCard, side: int):
-        cost = ""
-        if side == 0:
-            cost = card.face.cost
-
-        self._paintCost(cost)
-        self._paintTitle(card.face.getFlipName(side))
-        self._paintOracle(card.face.oracle[side])
-        self._paintStats(card.face.stats[0], self.StatsRegion.HeightOffset)
-        self._paintTypeline(card.face.getFlipType(side))
+    def paint_side(self, side: FlipSide):
+        self._paintCost(side.cost)
+        self._paintTitle(side.name)
+        self._paintOracle(side.oracle)
+        self._paintStats(side.stats, self.StatsRegion.HeightOffset)
+        self._paintTypeline(side.type)

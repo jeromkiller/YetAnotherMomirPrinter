@@ -123,8 +123,7 @@ class PainterBase():
             if wrapped.get_bbox(pos)[3] < pos[1] + area_height:
                 break
         else:
-            pass
-            #raise Exception("Text doesn't fit the area") #todo custom exception
+            raise Exception("Text doesn't fit the area") #todo custom exception
         return wrapped
 
     def _paintTitle(self, card_name: str):
@@ -139,9 +138,9 @@ class PainterBase():
         self.draw.rounded_rectangle(border, 6)
         self._reserveBoundingBox(border)
 
-    def _paintImage(self, card: MagicCard):
-        if card.image is not None:
-            im = card.image
+    def _paintImage(self, image: Image.Image | None = None):
+        if image is not None:
+            im = image
             im = ImageOps.fit(im, (self.canvas_size[0], self.ImageRegion.AreaHeight))
             im = im.convert("1")
             self.draw._image.paste(im, (0, self.ImageRegion.HeightOffset))

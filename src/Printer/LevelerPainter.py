@@ -1,45 +1,34 @@
 from .PainterBase import *
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import LevelerFace, level_block
 
 class LevelerPainter(PainterBase):
-    def paint_card(self, card: MagicCard):
-        assert card.face.layout == "leveler"
+    def paint_card(self, face: LevelerFace):
+        self._paintArtistCredit(face.image_credit)
+        self._paintImage(face.image)
 
-        self._paintArtistCredit(card.face.image_credit)
-        self._paintImage(card)
+        self._paintCost(face.cost)
+        self._paintTitle(face.name)
+        self._paintTypeline(face.type)
 
-        self._paintCost(card.face.cost)
-        self._paintTitle(card.face.name)
-        self._paintTypeline(card.face.type)
-
-        num_levels = len(card.face.oracle)
+        num_levels = len(face.levels)
         oracle_height = int(self.TextRegion.AreaHeight / num_levels)
 
         # print the rest of the textboxes with levels
-        first = True
-        for i in range(num_levels):
-            oracle_parts = card.face.oracle[i].split("\n", 1)
-            level = oracle_parts[0]
-            oracle = oracle_parts[1] if len(oracle_parts) > 1 else ""
-            stats = card.face.stats[i]
+        for i, level in enumerate(face.levels):
 
-            if first:
-                level = ""
-                oracle = oracle_parts[0]
-                first = False
-            self._paint_level(level, oracle, stats, self.TextRegion.HeightOffset + oracle_height * i, oracle_height)
+            self._paint_level(level, self.TextRegion.HeightOffset + oracle_height * i, oracle_height)
 
 
-    def _paint_level(self, level: str, oracle:str, stats: str, vPos: int, height: int):
-        self._paintStats(stats, vPos)
+    def _paint_level(self, level_block: level_block, vPos: int, height: int):
+        self._paintStats(level_block.stats, vPos)
 
         oracle_offset: int = 0
+        level = level_block.level
         if level:
             level_text = ImageText.Text("LEVEL", mode="1")
             level_bbox = self._paintText((2, vPos + 2), level_text)
 
             arrow_section = (level_bbox[2] + 2, vPos, level_bbox[2] + 17, vPos + height - 2)
-            #self.draw.rectangle(arrow_section)
         
             # level arrow space
             self._reserveBoundingBox(arrow_section)
@@ -48,7 +37,7 @@ class LevelerPainter(PainterBase):
             self._paint_level_arrow(arrow_section)
             oracle_offset = int(arrow_section[2] + 2)
 
-        self._paintWrappedText((oracle_offset, vPos), oracle, normal_text_size, height)
+        self._paintWrappedText((oracle_offset, vPos), level_block.oracle, normal_text_size, height)
 
     def _paint_level_arrow(self, arrow_section: tuple[float, float, float, float]):
         arrow_point_height = arrow_section[1] + ((arrow_section[3] - arrow_section[1]) / 2)

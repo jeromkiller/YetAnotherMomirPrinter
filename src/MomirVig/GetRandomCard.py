@@ -84,8 +84,11 @@ def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.Magic
         # try again
         return fetchCard(uri, params + "-oracle_id:" + e.oracle_id)
     
-    card.setImage(fetchArt(card.face.image_url))
-    card.extras = fetchExtras(card_json, visited)
+    if card.front_face.image_url:
+        card.setImage(fetchArt(card.front_face.image_url))
+    if card.back_face and card.back_face.image_url:
+        card.setImage2(fetchArt(card.back_face.image_url))
+    #card.extras = fetchExtras(card_json, visited)
     return card
 
 def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
@@ -116,7 +119,10 @@ def fetchExtras(card_json, visited: set[str]) -> list[MtgCard.MagicCard]:
             continue
 
         token = MtgCard.MagicCard(token_data.json())
-        token.setImage(fetchArt(token.face.image_url))
+        if token.image_url:
+            token.setImage(fetchArt(token.image_url))
+        if token.image_url_2:
+            token.setImage2(fetchArt(token.image_url_2))
         extras.append(token)
     return extras
 

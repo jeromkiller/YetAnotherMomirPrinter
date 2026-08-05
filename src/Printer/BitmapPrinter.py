@@ -1,5 +1,5 @@
 from PIL import Image
-from ..MomirVig.MtgCard import MagicCard
+from ..MomirVig.MtgCard import *
 from .StandardPainter import StandardPainter
 from .FlipPainter import FlipPainter
 from .LevelerPainter import LevelerPainter
@@ -26,24 +26,38 @@ class BitmapPrinter():
 
     def paint_card(self, card: MagicCard) -> Image.Image:
         #self._reset()
-        painter = None
-        if card.face.layout == "normal":
-            painter = StandardPainter(self.canvas_size)
-        elif card.face.layout == "leveler":
-            painter = LevelerPainter(self.canvas_size)
-        elif card.face.layout == "flip":
-            painter = FlipPainter(self.canvas_size)
-        elif card.face.layout == "saga":
-            painter = SagaPainter(self.canvas_size)
-        elif card.face.layout == "saga_creature":
-            painter = SagaCreaturePainter(self.canvas_size)
-        elif card.face.layout == "prepare":
-            painter = PreparedPainter(self.canvas_size)
-        elif card.face.layout == "prototype":
-            painter = PrototypePainter(self.canvas_size)
+        return self.paint_face(card.front_face)
+    
 
-        if painter is None:
-            raise TypeError
+    def paint_face(self, face: CardFace) -> Image.Image:
+        if isinstance(face, DefaultFace):
+            painter = StandardPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, LevelerFace):
+            painter = LevelerPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, FlipFace):
+            painter = FlipPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, SagaCreatureFace):
+            painter = SagaCreaturePainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, SagaFace):
+            painter = SagaPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, PrepareFace):
+            painter = PreparedPainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, PrototypeFace):
+            painter = PrototypePainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
         
-        painter.paint_card(card)
-        return painter.canvas
+        raise TypeError
+        
