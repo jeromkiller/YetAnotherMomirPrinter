@@ -1,6 +1,6 @@
 from .PainterBase import *
-from .SplitPainter import SplitPainter, SplitCard
-from ..MomirVig.MtgCard import ReminderSplitCard
+from .SplitPainter import SplitPainter, SplitFace
+from ..MomirVig.MtgCard import ReminderSplitFace
 from typing import overload
 
 class ReminderSplitPainter(SplitPainter):
@@ -9,13 +9,13 @@ class ReminderSplitPainter(SplitPainter):
         self.ExplainerRegion: CardRegion = CardRegion(0, 0)
     
     @overload
-    def paint_card(self, face: ReminderSplitCard): ...
+    def paint_card(self, face: ReminderSplitFace): ...
 
     @overload
-    def paint_card(self, face: SplitCard): ...
+    def paint_card(self, face: SplitFace): ...
 
-    def paint_card(self, face: ReminderSplitCard | SplitCard):
-        if not isinstance(face, ReminderSplitCard):
+    def paint_card(self, face: ReminderSplitFace | SplitFace):
+        if not isinstance(face, ReminderSplitFace):
             self.paint_card(face)
             return
         

@@ -1,7 +1,7 @@
 from PIL.Image import Image
 
 from .PainterBase import *
-from ..MomirVig.MtgCard import SplitSide, SplitCard
+from ..MomirVig.MtgCard import SplitSide, SplitFace
 
 class SplitPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -11,7 +11,7 @@ class SplitPainter(PainterBase):
         text_height = canvas_size[0] - self.TypeRegion.get_total_offset()
         self.TextRegion = CardRegion(self.TypeRegion.get_total_offset(), text_height)
 
-    def paint_card(self, face: SplitCard):
+    def paint_card(self, face: SplitFace):
         self._paintArtistCredit(face.image_credit)
 
         self._rotate_270()

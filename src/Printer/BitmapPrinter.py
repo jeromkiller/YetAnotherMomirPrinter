@@ -80,16 +80,16 @@ class BitmapPrinter():
             painter = PlaneswalkerPainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
-        elif isinstance(face, SplitCard):
-            if isinstance(face, AftermathCard):
+        elif isinstance(face, SplitFace):
+            if isinstance(face, AftermathFace):
                 painter = AftermathPainter(self.canvas_size)
                 painter.paint_card(face)
                 return painter.canvas
-            elif isinstance(face, FuseCard):
+            elif isinstance(face, FuseFace):
                 painter = FusePainter(self.canvas_size)
                 painter.paint_card(face)
                 return painter.canvas
-            elif isinstance(face, RoomCard):
+            elif isinstance(face, RoomFace):
                 painter = RoomPainter(self.canvas_size)
                 painter.paint_card(face)
                 return painter.canvas

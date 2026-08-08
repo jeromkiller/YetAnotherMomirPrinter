@@ -1,7 +1,7 @@
 from PIL.Image import Image
 
 from .PainterBase import *
-from ..MomirVig.MtgCard import SplitSide, SplitCard
+from ..MomirVig.MtgCard import SplitSide, SplitFace
 
 class AftermathPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
@@ -13,7 +13,7 @@ class AftermathPainter(PainterBase):
         self.AftermathTextRegion = CardRegion(self.TypeRegion.get_total_offset(), self.canvas_size[0] - self.TypeRegion.get_total_offset())
         self.rightSideWidth: int = self.canvas_size[1] - self.ArtistRegion.AreaHeight - self.TextRegion.get_total_offset()
         
-    def paint_card(self, face: SplitCard):
+    def paint_card(self, face: SplitFace):
         self._paintArtistCredit(face.image_credit)
 
         self._rotate_90()
