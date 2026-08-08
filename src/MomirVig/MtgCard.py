@@ -217,6 +217,45 @@ class PlaneswalkerFace(CardFace):
             else:
                 self.abilities.append(line)
 
+class SplitSide():
+    def __init__(self, face, has_reminder_text: bool = False):
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        if has_reminder_text:
+            self.oracle: str = "\n".join(face.get("oracle_text", "").split("\n")[:-1])
+        else:
+            self.oracle: str = face.get("oracle_text", "")
+
+class SplitCard(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face_1 = self.get_face(json, card_part_offset)
+        face_2 = self.get_face(json, card_part_offset + 1)
+        self.left_side: SplitSide = SplitSide(face_1)
+        self.right_side: SplitSide = SplitSide(face_2)
+
+class AftermathCard(SplitCard):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+
+class ReminderSplitCard(SplitCard):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        self.reminder: str = self.left_side.oracle.split("\n")[-1]
+        self.left_side.oracle = "\n".join(self.left_side.oracle.split("\n")[:-1])
+        self.right_side.oracle = "\n".join(self.right_side.oracle.split("\n")[:-1])
+
+class FuseCard(ReminderSplitCard):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+
+class RoomCard(ReminderSplitCard):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        self.right_side.type = ""
+
 class MagicCard():
     def __init__(self, json):
         # figure out the card type
@@ -255,6 +294,10 @@ class MagicCard():
             elif "Planeswalker" in type:
                 layout = "planeswalker"
 
+        # some un cards have more than 2 faces, currently unsupported
+        if len(json.get("name", "").split("//")) > 2:
+            raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
+
         if layout == "normal":
             return DefaultFace(json, card_part_offset), card_part_offset+ 1
         elif layout == "leveler":
@@ -274,6 +317,15 @@ class MagicCard():
             return PrototypeFace(json, card_part_offset), card_part_offset + 1
         elif layout == "planeswalker":
             return PlaneswalkerFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "split":    # triple faced card is not parsable right now
+            if "Aftermath" in keywords:
+                return AftermathCard(json, card_part_offset), card_part_offset + 2
+            elif "Fuse" in keywords:
+                return FuseCard(json, card_part_offset), card_part_offset + 2
+            elif "Room" in type:
+                return RoomCard(json, card_part_offset), card_part_offset + 2
+            else:
+                return SplitCard(json, card_part_offset), card_part_offset + 2
         
         raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 

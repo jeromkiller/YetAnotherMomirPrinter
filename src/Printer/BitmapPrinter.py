@@ -9,6 +9,10 @@ from .PreparedPainter import PreparedPainter
 from .PrototypePainter import PrototypePainter
 from .AdventurePainter import AdventurePainter
 from .PlaneswalkerPainter import PlaneswalkerPainter
+from .SplitPainter import SplitPainter
+from .FusePainter import FusePainter
+from .RoomPainter import RoomPainter
+from .AftermathPainter import AftermathPainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -76,7 +80,23 @@ class BitmapPrinter():
             painter = PlaneswalkerPainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
-
+        elif isinstance(face, SplitCard):
+            if isinstance(face, AftermathCard):
+                painter = AftermathPainter(self.canvas_size)
+                painter.paint_card(face)
+                return painter.canvas
+            elif isinstance(face, FuseCard):
+                painter = FusePainter(self.canvas_size)
+                painter.paint_card(face)
+                return painter.canvas
+            elif isinstance(face, RoomCard):
+                painter = RoomPainter(self.canvas_size)
+                painter.paint_card(face)
+                return painter.canvas
+            else:
+                painter = SplitPainter(self.canvas_size)
+                painter.paint_card(face)
+                return painter.canvas
         
         raise TypeError
         

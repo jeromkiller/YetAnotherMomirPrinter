@@ -50,6 +50,22 @@ class PainterBase():
                                                      self.canvas_size[1] - bbox[3],
                                                      self.canvas_size[0] - bbox[0],
                                                      self.canvas_size[1] - bbox[1],), self.obscured_areas))
+        
+    def _rotate_90(self):
+        self.canvas = self.canvas.rotate(90, expand=True)
+        self.draw = ImageDraw.Draw(self.canvas)
+        self.obscured_areas = list(map(lambda bbox: (bbox[1],
+                                                     self.canvas_size[0] - bbox[2],
+                                                     bbox[3],
+                                                     self.canvas_size[0] - bbox[0],), self.obscured_areas))
+
+    def _rotate_270(self):
+        self.canvas = self.canvas.rotate(270, expand=True)
+        self.draw = ImageDraw.Draw(self.canvas)
+        self.obscured_areas = list(map(lambda bbox: (self.canvas_size[1] - bbox[3],
+                                                     bbox[0],
+                                                     self.canvas_size[1] - bbox[1],
+                                                     bbox[2],), self.obscured_areas))
 
     def _reserveBoundingBox(self, bbox: tuple[float, float, float, float]):
         self.obscured_areas.append((int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])))
