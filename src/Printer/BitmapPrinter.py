@@ -13,6 +13,7 @@ from .SplitPainter import SplitPainter
 from .FusePainter import FusePainter
 from .RoomPainter import RoomPainter
 from .AftermathPainter import AftermathPainter
+from .BattlePainter import BattlePainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -97,6 +98,10 @@ class BitmapPrinter():
                 painter = SplitPainter(self.canvas_size)
                 painter.paint_card(face)
                 return painter.canvas
+        elif isinstance(face, BattleFace):
+            painter = BattlePainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
         
         raise TypeError
         

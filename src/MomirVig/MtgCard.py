@@ -256,6 +256,18 @@ class RoomFace(ReminderSplitFace):
         super().__init__(json, card_part_offset)
         self.right_side.type = ""
 
+class BattleFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.oracle: str = face.get("oracle_text", "")
+        self.defense: str = face.get("defense", "")
+
 class MagicCard():
     def __init__(self, json):
         # figure out the card type
@@ -285,6 +297,8 @@ class MagicCard():
         if layout == "transform":
             if "Saga" in type:
                 layout = "saga"
+            elif "Battle" in type:
+                layout = "battle"
             else:
                 layout = "normal"
         
@@ -326,6 +340,8 @@ class MagicCard():
                 return RoomFace(json, card_part_offset), card_part_offset + 2
             else:
                 return SplitFace(json, card_part_offset), card_part_offset + 2
+        elif layout == "battle":
+            return BattleFace(json, card_part_offset), card_part_offset + 1
         
         raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 
