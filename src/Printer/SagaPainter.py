@@ -1,11 +1,11 @@
 from .PainterBase import *
+from .VerticalArtPainter import VerticalImagePainter
 from ..MomirVig.MtgCard import SagaFace, SagaSection
-from PIL.ImageFont import FreeTypeFont
 
-class SagaPainter(PainterBase):
+class SagaPainter(VerticalImagePainter):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.leftSideText = False
+        self.leftSideText = True
         saga_text_height = int(self.canvas_size[1] - self.TitleRegion.AreaHeight - self.TypeRegion.AreaHeight - self.ArtistRegion.AreaHeight)
         image_height = saga_text_height
         self.ExplainerRegion = CardRegion(self.TitleRegion.get_total_offset(), saga_text_height)
@@ -23,29 +23,8 @@ class SagaPainter(PainterBase):
         self._paintSagaText(face.saga_sections)
         self._paintTypeline(face.type)
 
-    def _paintImage(self, image: Image.Image | None = None):
-        image_start = (int(self.canvas_size[0] / 2), self.ImageRegion.HeightOffset)
-        image_size = (int(self.canvas_size[0] / 2), self.ImageRegion.AreaHeight)
-        
-        if image is not None:
-            im = image
-            im = ImageOps.fit(im, (image_size))
-            im = im.convert("1")
-            self.canvas.paste(im, (image_start))
-        rectangle = (image_start[0], image_start[1], image_start[0] + image_size[0], image_start[1] + image_size[1])
-        self.draw.rectangle(rectangle)
-        self._reserveBoundingBox(rectangle)
-
-    def _paintExplainer(self, explainer_text: str):
-        explainer_bbox = self._paintWrappedText((0, self.ExplainerRegion.HeightOffset), explainer_text, normal_text_size, self.ExplainerRegion.AreaHeight)
-        self.SagaTextRegion = CardRegion(int(explainer_bbox[3] + 1), int(self.TypeRegion.HeightOffset - explainer_bbox[3] + 1))
-
     def _paintSagaText(self, sections: list[SagaSection]):
-        # test wrap the text
-        combined_text = "\n---\n".join([s.oracle for s in sections])
-        wrapped_text = self._wrapAndResizeText((27, self.SagaTextRegion.HeightOffset), combined_text, normal_text_size, self.SagaTextRegion.AreaHeight)
-        assert isinstance(wrapped_text.font, FreeTypeFont)
-        text_size = int(wrapped_text.font.size)
+        text_size = self._findTextSize([s.oracle for s in sections], 27)
 
         # Right now I'm hoping there aren't any sagas that puts me in a situation where text has to shrink to fit.
         # and also individual boxes aren't tall enough to fit its multiple level markers

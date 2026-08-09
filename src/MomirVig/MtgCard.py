@@ -105,7 +105,6 @@ class SagaFace(CardFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
         face = self.get_face(json, card_part_offset)
-        self.name: str = face
         self.name: str = face.get("name", "")
         self.cost: str = face.get("mana_cost", "")
         self.colors: str = "".join(map(str, face.get("colors", [])))
@@ -150,6 +149,16 @@ class SagaCreatureFace(SagaFace):
         self.stats: str = ""
         if "power" in face and "toughness" in face:
             self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+
+class CaseFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.case_stages: list[str] = list(face.get("oracle_text", "").split("\n"))
 
 class PrototypeFace(CardFace):
     def __init__(self, json, card_part_offset: int):
@@ -323,6 +332,8 @@ class MagicCard():
                 return SagaCreatureFace(json, card_part_offset), card_part_offset + 1
             else:
                 return SagaFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "case":
+            return CaseFace(json, card_part_offset), card_part_offset + 1
         elif layout == "adventure":
             return AdventureFace(json, card_part_offset), card_part_offset + 2
         elif layout == "prepare":
