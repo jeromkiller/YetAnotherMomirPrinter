@@ -160,6 +160,36 @@ class CaseFace(CardFace):
         self.type: str = face.get("type_line", "")
         self.case_stages: list[str] = list(face.get("oracle_text", "").split("\n"))
 
+class ClassSection():
+    def __init__(self, level: str, oracle: str):
+        level_parts = list(level.split(" ", 1))
+        self.cost = level_parts[0]
+        self.level = level_parts[1]
+        self.oracle = oracle
+
+class ClassFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        oracle_parts = list(face.get("oracle_text", "").split("\n"))
+        self.level_sections: list[str | ClassSection] = list()
+        i = 0
+        level_regex = r"^({[^}]+})+: .+ \d$"
+        while i < len(oracle_parts):
+            if re.search(level_regex, oracle_parts[i]):
+                level = oracle_parts[i]
+                i += 1
+                oracle = oracle_parts[i]
+                self.level_sections.append(ClassSection(level, oracle))
+            else:
+                self.level_sections.append(oracle_parts[i])
+            i += 1
+
+
 class PrototypeFace(CardFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
@@ -334,6 +364,8 @@ class MagicCard():
                 return SagaFace(json, card_part_offset), card_part_offset + 1
         elif layout == "case":
             return CaseFace(json, card_part_offset), card_part_offset + 1
+        elif layout == "class":
+            return ClassFace(json, card_part_offset), card_part_offset + 1
         elif layout == "adventure":
             return AdventureFace(json, card_part_offset), card_part_offset + 2
         elif layout == "prepare":

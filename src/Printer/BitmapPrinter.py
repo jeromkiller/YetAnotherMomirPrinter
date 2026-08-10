@@ -15,6 +15,7 @@ from .RoomPainter import RoomPainter
 from .AftermathPainter import AftermathPainter
 from .BattlePainter import BattlePainter
 from .CasePainter import CasePainter
+from .ClassPainter import ClassPainter
 
 large_text_size = 20
 normal_text_size = 15
@@ -68,6 +69,10 @@ class BitmapPrinter():
             return painter.canvas
         elif isinstance(face, CaseFace):
             painter = CasePainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, ClassFace):
+            painter = ClassPainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
         elif isinstance(face, PrepareFace):
