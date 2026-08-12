@@ -11,10 +11,16 @@ class CardFace():
         if "card_faces" in json:
             face = json["card_faces"][card_part_offset]
         return face
+    
+    @staticmethod
+    def num_parts_consumed() -> int:
+        raise NotImplementedError
+        return 0
 
     def __init__(self, json, card_part_offset: int):
         face = self.get_face(json, card_part_offset)
 
+        self.name = ""
         self.image_url: str = ""
         if "image_uris" in face:
             self.image_url = face.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
@@ -44,6 +50,10 @@ class DefaultFace(CardFace):
         self.stats: str = ""
         if "power" in face and "toughness" in face:
             self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
 
 @dataclass(frozen=True)
 class level_block():
@@ -79,6 +89,10 @@ class LevelerFace(CardFace):
                 oracle += "\n" + part
         self.levels.append(level_block(level, oracle, stats))
 
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+
 class FlipSide():
     def __init__(self, part):
         self.name: str = part.get("name", "")
@@ -95,6 +109,10 @@ class FlipFace(CardFace):
         self.colors: str = "".join(map(str, json.get("colors", [])))
         self.up_side: FlipSide = FlipSide(self.get_face(json, card_part_offset))
         self.down_side: FlipSide = FlipSide(self.get_face(json, card_part_offset + 1))
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 2
 
 @dataclass(frozen=True)
 class SagaSection():
@@ -140,6 +158,10 @@ class SagaFace(CardFace):
             oracle: str = sections[1]
             self.saga_sections.append(SagaSection(levels, oracle))
 
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+
 class SagaCreatureFace(SagaFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
@@ -150,6 +172,10 @@ class SagaCreatureFace(SagaFace):
         if "power" in face and "toughness" in face:
             self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
 
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+
 class CaseFace(CardFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
@@ -159,6 +185,10 @@ class CaseFace(CardFace):
         self.colors: str = "".join(map(str, face.get("colors", [])))
         self.type: str = face.get("type_line", "")
         self.case_stages: list[str] = list(face.get("oracle_text", "").split("\n"))
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
 
 class ClassSection():
     def __init__(self, level: str, oracle: str):
@@ -188,6 +218,10 @@ class ClassFace(CardFace):
             else:
                 self.level_sections.append(oracle_parts[i])
             i += 1
+    
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
 
 
 class PrototypeFace(CardFace):
@@ -215,11 +249,20 @@ class PrototypeFace(CardFace):
         self.prototype_oracle: str = " ".join(prototype_cost_parts[:-1]) + " " + " ".join(prototype_stats_parts[1:])
 
         self.oracle: str = oracle_parts[1]
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+    
 class DualSpellFace(CardFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
         self.spell_1: DefaultFace = DefaultFace(json, card_part_offset)
         self.spell_2: DefaultFace = DefaultFace(json, card_part_offset + 1)
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 2
 
 class AdventureFace(DualSpellFace):
     def __init__(self, json, card_part_offset: int):
@@ -256,6 +299,10 @@ class PlaneswalkerFace(CardFace):
             else:
                 self.abilities.append(line)
 
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+
 class SplitSide():
     def __init__(self, face, has_reminder_text: bool = False):
         self.name: str = face.get("name", "")
@@ -274,6 +321,10 @@ class SplitFace(CardFace):
         face_2 = self.get_face(json, card_part_offset + 1)
         self.left_side: SplitSide = SplitSide(face_1)
         self.right_side: SplitSide = SplitSide(face_2)
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 2
 
 class AftermathFace(SplitFace):
     def __init__(self, json, card_part_offset: int):
@@ -307,6 +358,35 @@ class BattleFace(CardFace):
         self.oracle: str = face.get("oracle_text", "")
         self.defense: str = face.get("defense", "")
 
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
+class MeldFace(DefaultFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+
+        # figure out which meld card has the text side
+        first_component: dict | None = None
+        for part in json.get("all_parts", []):
+            if part.get("component", "") == "meld_part":
+                first_component = part
+                break
+        assert first_component
+        self.text_side: str = first_component.get("name", "")
+
+class MeldPlaneswalkerFace(PlaneswalkerFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+
+        # figure out which meld card has the text side
+        first_component: dict | None = None
+        for part in json.get("all_parts", []):
+            if part.get("component", "") == "meld_part":
+                first_component = part
+                break
+        assert first_component
+        self.text_side: str = first_component.get("name", "")
+
 class MagicCard():
     def __init__(self, json):
         # figure out the card type
@@ -316,18 +396,18 @@ class MagicCard():
         if self.layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
             self.layout = "normal"
 
-        self.front_face, offset = self.create_face(json, 0)
+        self.front_face = self.create_face(json, 0)
         self.back_face: CardFace | None = None
         if self.layout in ["transform", "modal_dfc", "battle"]:
-            self.back_face, offset = self.create_face(json, offset)
+            self.back_face = self.create_face(json, self.front_face.num_parts_consumed())
 
         self.extras = list[MagicCard]()
 
     @staticmethod
-    def create_face(json, card_part_offset: int) -> tuple[CardFace, int]:
+    def create_face(json, card_part_offset: int) -> CardFace:
         layout = json["layout"]
         # treat these special kinds of cards as regular for now
-        if layout in ["host", "token", "mutate", "meld", "double_faced_token", "emblem"]:
+        if layout in ["host", "token", "mutate", "double_faced_token", "emblem"]:
             layout = "normal"
 
         face = CardFace.get_face(json, card_part_offset)
@@ -338,6 +418,22 @@ class MagicCard():
                 layout = "saga"
             elif "Battle" in type:
                 layout = "battle"
+            else:
+                layout = "normal"
+            
+        if layout == "meld":
+            # is this the card for the meld result
+            is_result = False
+            for part in json.get("all_parts", []):
+                if part.get("component", "") == "meld_result" and part.get("name", "") == json.get("name"):
+                    is_result = True
+                    break
+            
+            if is_result:
+                if "Planeswalker" in type:
+                    return MeldPlaneswalkerFace(json, card_part_offset)
+                else:
+                    return MeldFace(json, card_part_offset)
             else:
                 layout = "normal"
         
@@ -352,39 +448,39 @@ class MagicCard():
             raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 
         if layout == "normal":
-            return DefaultFace(json, card_part_offset), card_part_offset+ 1
+            return DefaultFace(json, card_part_offset)
         elif layout == "leveler":
-            return LevelerFace(json, card_part_offset), card_part_offset + 1
+            return LevelerFace(json, card_part_offset)
         elif layout == "flip":
-            return FlipFace(json, card_part_offset), card_part_offset + 2
+            return FlipFace(json, card_part_offset)
         elif layout == "saga":
             if "Creature" in type:
-                return SagaCreatureFace(json, card_part_offset), card_part_offset + 1
+                return SagaCreatureFace(json, card_part_offset)
             else:
-                return SagaFace(json, card_part_offset), card_part_offset + 1
+                return SagaFace(json, card_part_offset)
         elif layout == "case":
-            return CaseFace(json, card_part_offset), card_part_offset + 1
+            return CaseFace(json, card_part_offset)
         elif layout == "class":
-            return ClassFace(json, card_part_offset), card_part_offset + 1
+            return ClassFace(json, card_part_offset)
         elif layout == "adventure":
-            return AdventureFace(json, card_part_offset), card_part_offset + 2
+            return AdventureFace(json, card_part_offset)
         elif layout == "prepare":
-            return PrepareFace(json, card_part_offset), card_part_offset + 2
+            return PrepareFace(json, card_part_offset)
         elif layout == "prototype":
-            return PrototypeFace(json, card_part_offset), card_part_offset + 1
+            return PrototypeFace(json, card_part_offset)
         elif layout == "planeswalker":
-            return PlaneswalkerFace(json, card_part_offset), card_part_offset + 1
+            return PlaneswalkerFace(json, card_part_offset)
         elif layout == "split":    # triple faced card is not parsable right now
             if "Aftermath" in keywords:
-                return AftermathFace(json, card_part_offset), card_part_offset + 2
+                return AftermathFace(json, card_part_offset)
             elif "Fuse" in keywords:
-                return FuseFace(json, card_part_offset), card_part_offset + 2
+                return FuseFace(json, card_part_offset)
             elif "Room" in type:
-                return RoomFace(json, card_part_offset), card_part_offset + 2
+                return RoomFace(json, card_part_offset)
             else:
-                return SplitFace(json, card_part_offset), card_part_offset + 2
+                return SplitFace(json, card_part_offset)
         elif layout == "battle":
-            return BattleFace(json, card_part_offset), card_part_offset + 1
+            return BattleFace(json, card_part_offset)
         
         raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 
@@ -398,5 +494,7 @@ class MagicCard():
     def addExtraCard(self, extra: 'MagicCard'):
         self.extras.append(extra)
 
+    def addSecondFace(self, json):
+        self.back_face = self.create_face(json, 0)
     
 

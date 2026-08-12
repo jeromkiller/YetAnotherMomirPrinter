@@ -4,8 +4,8 @@ from ..MomirVig.MtgCard import PrepareFace
 class PreparedPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.PrepareTitleRegion = CardRegion(self.TypeRegion.get_total_offset(), normal_text_size)
-        self.PrepareTypeRegion = CardRegion(self.PrepareTitleRegion.get_total_offset(), normal_text_size)
+        self.PrepareTitleRegion = CardRegion(self.TypeRegion.get_total_offset(), self._normal_text_size())
+        self.PrepareTypeRegion = CardRegion(self.PrepareTitleRegion.get_total_offset(), self._normal_text_size())
         
         oracle_text_height = self.ArtistRegion.HeightOffset - self.PrepareTypeRegion.get_total_offset()
         self.PrepareOracle = CardRegion(self.PrepareTypeRegion.get_total_offset(), oracle_text_height)
@@ -43,7 +43,7 @@ class PreparedPainter(PainterBase):
 
     def _paintPrepareOracle(self, oracle: str):
         horizontal_offset = self._getPrepareHorizontalOffset() + 2
-        bbox = self._paintWrappedText((horizontal_offset, self.PrepareOracle.HeightOffset), oracle, normal_text_size, self.PrepareOracle.AreaHeight)
+        bbox = self._paintWrappedText((horizontal_offset, self.PrepareOracle.HeightOffset), oracle, self._normal_text_size(), self.PrepareOracle.AreaHeight)
         self._reserveBoundingBox((horizontal_offset, self.PrepareOracle.HeightOffset, bbox[2], self.PrepareOracle.HeightOffset + self.PrepareOracle.AreaHeight))
 
     def _drawDividerLine(self):

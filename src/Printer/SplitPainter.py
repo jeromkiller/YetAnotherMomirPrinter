@@ -42,7 +42,7 @@ class SplitPainter(PainterBase):
 
     def _paintSplitTitle(self, card_name: str, right_side: bool):
         offset = self._get_horizontal_offset(right_side)
-        self._paintWrappedText((offset, self.TitleRegion.HeightOffset), card_name, large_text_size, self.TitleRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((offset, self.TitleRegion.HeightOffset), card_name, self._large_text_size(), self.TitleRegion.AreaHeight, Decoration.BOLD)
 
     def _paintImage(self, image: Image | None = None):
         if not image:
@@ -70,11 +70,11 @@ class SplitPainter(PainterBase):
 
     def _paintSplitTypeline(self, typeline: str, right_side: bool):
         offset = self._get_horizontal_offset(right_side)
-        self._paintWrappedText((offset, self.TypeRegion.HeightOffset), typeline, large_text_size, self.TypeRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((offset, self.TypeRegion.HeightOffset), typeline, self._large_text_size(), self.TypeRegion.AreaHeight, Decoration.BOLD)
 
     def _paintSplitOracle(self, text: str, right_side: bool):
         offset = self._get_horizontal_offset(right_side)
-        bbox = self._paintWrappedText((offset, self.TextRegion.HeightOffset), text, normal_text_size, self.TextRegion.AreaHeight)
+        bbox = self._paintWrappedText((offset, self.TextRegion.HeightOffset), text, self._normal_text_size(), self.TextRegion.AreaHeight)
         self._reserveBoundingBox((offset, self.TextRegion.HeightOffset, bbox[3], self.TextRegion.get_total_offset()))
 
     def _paintDividingLine(self):

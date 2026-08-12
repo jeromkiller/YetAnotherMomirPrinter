@@ -4,7 +4,7 @@ from .ReminderSplitPainter import ReminderSplitPainter
 class RoomPainter(ReminderSplitPainter):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.ExplainerRegion = CardRegion(self.TypeRegion.get_total_offset(), normal_text_size * 2)
+        self.ExplainerRegion = CardRegion(self.TypeRegion.get_total_offset(), self._normal_text_size() * 2)
         self.TextRegion = CardRegion(self.ExplainerRegion.get_total_offset() + 2, self.canvas_size[0] - (self.ExplainerRegion.get_total_offset() + 2))
 
     def _paint_explainer_divider(self):

@@ -58,7 +58,7 @@ class AftermathPainter(PainterBase):
 
     def _paintAftermathTitle(self, title: str):
         offset = self._getAftermathOffset()
-        self._paintWrappedText((offset, self.TitleRegion.HeightOffset), title, large_text_size, self.TitleRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((offset, self.TitleRegion.HeightOffset), title, self._large_text_size(), self.TitleRegion.AreaHeight, Decoration.BOLD)
 
     def _paintAftermathCost(self, cost: str):
         offset = self.ArtistRegion.AreaHeight
@@ -66,11 +66,11 @@ class AftermathPainter(PainterBase):
 
     def _paintAftermathType(self, typeline: str):
         offset = self._getAftermathOffset()
-        self._paintWrappedText((offset, self.TypeRegion.HeightOffset), typeline, large_text_size, self.TypeRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((offset, self.TypeRegion.HeightOffset), typeline, self._large_text_size(), self.TypeRegion.AreaHeight, Decoration.BOLD)
 
     def _paintAftermathOracle(self, text: str):
         offset = self._getAftermathOffset()
-        bbox = self._paintWrappedText((offset, self.TextRegion.HeightOffset), text, normal_text_size, self.TextRegion.AreaHeight)
+        bbox = self._paintWrappedText((offset, self.TextRegion.HeightOffset), text, self._normal_text_size(), self.TextRegion.AreaHeight)
         self._reserveBoundingBox((offset, self.TextRegion.HeightOffset, bbox[3], self.TextRegion.get_total_offset()))
 
     def _paintDividingLine(self):

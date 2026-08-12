@@ -32,12 +32,12 @@ class LevelerPainter(PainterBase):
         
             # level arrow space
             self._reserveBoundingBox(arrow_section)
-            self._paintWrappedText((2, int(level_bbox[3] + 2)), level.strip("LEVEL "), large_text_size, height - 2 - (int(level_bbox[3]) - vPos), Decoration.BOLD)
+            self._paintWrappedText((2, int(level_bbox[3] + 2)), level.strip("LEVEL "), self._large_text_size(), height - 2 - (int(level_bbox[3]) - vPos), Decoration.BOLD)
             # paint the level arrow box
             self._paint_level_arrow(arrow_section)
             oracle_offset = int(arrow_section[2] + 2)
 
-        self._paintWrappedText((oracle_offset, vPos), level_block.oracle, normal_text_size, height)
+        self._paintWrappedText((oracle_offset, vPos), level_block.oracle, self._normal_text_size(), height)
 
     def _paint_level_arrow(self, arrow_section: tuple[float, float, float, float]):
         arrow_point_height = arrow_section[1] + ((arrow_section[3] - arrow_section[1]) / 2)

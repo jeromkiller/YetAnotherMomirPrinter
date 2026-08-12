@@ -4,8 +4,8 @@ from ..MomirVig.MtgCard import AdventureFace
 class AdventurePainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.AdventureTitleRegion = CardRegion(self.TypeRegion.get_total_offset(), normal_text_size)
-        self.AdventureTypeRegion = CardRegion(self.AdventureTitleRegion.get_total_offset(), normal_text_size)
+        self.AdventureTitleRegion = CardRegion(self.TypeRegion.get_total_offset(), self._normal_text_size())
+        self.AdventureTypeRegion = CardRegion(self.AdventureTitleRegion.get_total_offset(), self._normal_text_size())
         
         oracle_text_height = self.ArtistRegion.HeightOffset - self.AdventureTypeRegion.get_total_offset()
         self.AdventureOracle = CardRegion(self.AdventureTypeRegion.get_total_offset(), oracle_text_height)
@@ -41,11 +41,11 @@ class AdventurePainter(PainterBase):
         self._paintWrappedText((0, self.AdventureTypeRegion.HeightOffset), type, self.AdventureTypeRegion.AreaHeight, self.AdventureTypeRegion.AreaHeight, Decoration.BOLD)
 
     def _paintAdventureOracle(self, oracle: str):
-        self._paintWrappedText((0, self.AdventureOracle.HeightOffset), oracle, normal_text_size, self.AdventureOracle.AreaHeight)
+        self._paintWrappedText((0, self.AdventureOracle.HeightOffset), oracle, self._normal_text_size(), self.AdventureOracle.AreaHeight)
 
     def _paintOracle(self, text: str):
         horizontal_offset = self._getAdventureHorizontalOffset() + 2
-        bbox = self._paintWrappedText((horizontal_offset, self.TextRegion.HeightOffset), text, normal_text_size, self.TextRegion.AreaHeight)
+        bbox = self._paintWrappedText((horizontal_offset, self.TextRegion.HeightOffset), text, self._normal_text_size(), self.TextRegion.AreaHeight)
         self._reserveBoundingBox((horizontal_offset, self.TextRegion.HeightOffset, bbox[2], self.TextRegion.HeightOffset + self.TextRegion.AreaHeight))
 
     def _drawDividerLine(self):

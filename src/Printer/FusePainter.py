@@ -4,7 +4,7 @@ from .ReminderSplitPainter import ReminderSplitPainter
 class FusePainter(ReminderSplitPainter):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.ExplainerRegion = CardRegion(self.canvas_size[0] - normal_text_size, normal_text_size)
+        self.ExplainerRegion = CardRegion(self.canvas_size[0] - self._normal_text_size(), self._normal_text_size())
         self.TextRegion.AreaHeight = self.TextRegion.AreaHeight - (self.ExplainerRegion.AreaHeight + 1)
 
     def _paint_explainer_divider(self):

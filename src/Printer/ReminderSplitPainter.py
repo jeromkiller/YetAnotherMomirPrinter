@@ -26,7 +26,7 @@ class ReminderSplitPainter(SplitPainter):
         super().paint_card(face)
 
     def _paint_explainer(self, text: str):
-        self._paintWrappedText((self._get_horizontal_offset(False), self.ExplainerRegion.HeightOffset), text, normal_text_size, self.ExplainerRegion.AreaHeight)
+        self._paintWrappedText((self._get_horizontal_offset(False), self.ExplainerRegion.HeightOffset), text, self._normal_text_size(), self.ExplainerRegion.AreaHeight)
 
     def _paint_explainer_divider(self):
         pass

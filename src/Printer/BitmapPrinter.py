@@ -16,10 +16,7 @@ from .AftermathPainter import AftermathPainter
 from .BattlePainter import BattlePainter
 from .CasePainter import CasePainter
 from .ClassPainter import ClassPainter
-
-large_text_size = 20
-normal_text_size = 15
-tiny_text_size = 10
+from .MeldPainter import MeldPainter
 
 class CardRegion():
     def __init__(self, HeightOffset: int, AreaHeight: int):
@@ -37,7 +34,14 @@ class BitmapPrinter():
         canvas = self.paint_face(card.front_face)
         if card.back_face:
             front_face = canvas
-            back_face = self.paint_face(card.back_face)
+
+            back_face: Image.Image | None = None
+            if isinstance(card.back_face, MeldFace) or isinstance(card.back_face, MeldPlaneswalkerFace):
+                painter = MeldPainter(self.canvas_size)
+                back_face = painter.paint_card(card.back_face, card.front_face.name)
+            else:
+                back_face = self.paint_face(card.back_face)
+            
             canvas = Image.new("1", (self.canvas_size[0] * 2 + 40, self.canvas_size[1]), color=1) #canvas.crop((0, 0, card_width * 2 + 40, canvas.height)
             canvas.paste(front_face, (0, 0))
             canvas.paste(back_face, (canvas.width - back_face.width, 0))

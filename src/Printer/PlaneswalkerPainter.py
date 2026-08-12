@@ -3,15 +3,20 @@ from PIL.Image import Image
 from .PainterBase import *
 from ..MomirVig.MtgCard import PlaneswalkerFace, PlaneswalkerAbilityBlock
 
-arrow_size = 5
-ability_cost_with = 35
-ability_cost_height = large_text_size + 4
-
 class PlaneswalkerPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
         self._ResizeImageRegion(235)
     
+    def _ability_arrow_size(self) -> int:
+        return 5
+    
+    def _ability_cost_width(self) -> int:
+        return 35
+    
+    def _ability_cost_height(self) -> int:
+        return self._large_text_size() + 4
+
     def paint_card(self, face:PlaneswalkerFace):
         self._paintCost(face.cost)
         self._paintTitle(face.name)
@@ -41,43 +46,53 @@ class PlaneswalkerPainter(PainterBase):
             if isinstance(ability, PlaneswalkerAbilityBlock):
                 self._paintLoyaltyAbility(ability, height_offset, ability_height)
             else:
-                self._paintWrappedText((0, height_offset), ability, normal_text_size, ability_height)
+                self._paintWrappedText((0, height_offset), ability, self._normal_text_size(), ability_height)
             
             if first:
                 first = False
             else:
-                self.draw.line(((0, height_offset - 2), (self.canvas_size[0], height_offset - 2)))
+                self.draw.line(((0, height_offset - 2), (self.canvas_size[1], height_offset - 2)))
 
     def _paintLoyaltyAbility(self, ability: PlaneswalkerAbilityBlock, height_offset: int, height: int):
-        self._paintAbilityCost(ability.cost, height_offset)
-        self._paintWrappedText((ability_cost_with + 3, height_offset), ability.oracle, normal_text_size, height)
+        self._paintAbilityCost(ability.cost, height_offset, height)
+        self._paintWrappedText((self._ability_cost_width() + 3, height_offset), ability.oracle, self._normal_text_size(), height)
 
-    def _paintAbilityCost(self, cost: int, height_offset: int):
+    def _paintAbilityCost(self, cost: int, height_offset: int, ability_height: int):
         if cost > 0:
-            self._paintUpArrow(cost, height_offset)
+            self._paintUpArrow(cost, height_offset, ability_height)
         elif cost < 0:
-            self._paintDownArrow(cost, height_offset)
+            self._paintDownArrow(cost, height_offset, ability_height)
         else:
-            self._paintNoCostArrow(height_offset)
+            self._paintNoCostArrow(height_offset, ability_height)
 
-    def _paintUpArrow(self, cost: int, height_offset: int):
-        box = (0, height_offset + arrow_size, ability_cost_with, height_offset + arrow_size + ability_cost_height)
-        self.draw.polygon([(box[0], box[1]), (box[0] + ability_cost_with / 2, height_offset), (box[2], box[1]),
+    def _paintUpArrow(self, cost: int, height_offset: int, ability_height: int):
+        height = ability_height - (self._ability_arrow_size() * 2)
+        height = min(self._ability_cost_height(), height)
+
+        box = (0, height_offset + self._ability_arrow_size(), self._ability_cost_width(), height_offset + self._ability_arrow_size() + height)
+        self.draw.polygon([(box[0], box[1]), (box[0] + self._ability_cost_width() / 2, height_offset), (box[2], box[1]),
                            (box[2], box[3]), (box[0], box[3])])
-        text = self._wrapAndResizeText((0, box[1]), f"+{cost}", large_text_size, large_text_size, Decoration.BOLD)
+        text = self._wrapAndResizeText((0, box[1]), f"+{cost}", height, self._large_text_size(), Decoration.BOLD)
         self._paintCenteredText(text, box)
         
-    def _paintDownArrow(self, cost: int, height_offset: int):
-        box = (0, height_offset + arrow_size, ability_cost_with, height_offset + arrow_size + ability_cost_height)
+    def _paintDownArrow(self, cost: int, height_offset: int, ability_height: int):
+        height = ability_height - (self._ability_arrow_size() * 2)
+        height = min(self._ability_cost_height(), height)
+
+        box = (0, height_offset + self._ability_arrow_size(), self._ability_cost_width(), height_offset + self._ability_arrow_size() + height)
         self.draw.polygon([(box[0], box[1]), (box[2], box[1]),
-                           (box[2], box[3]), (box[0] + ability_cost_with / 2, box[3] + arrow_size), (box[0], box[3])])
-        text = self._wrapAndResizeText((0, box[1]), str(cost), large_text_size, large_text_size, Decoration.BOLD)
+                           (box[2], box[3]), (box[0] + self._ability_cost_width() / 2, box[3] + self._ability_arrow_size()), (box[0], box[3])])
+        text = self._wrapAndResizeText((0, box[1]), str(cost), height, self._large_text_size(), Decoration.BOLD)
         self._paintCenteredText(text, box)
 
-    def _paintNoCostArrow(self, height_offset: int):
-        box = (0, height_offset + arrow_size, ability_cost_with, height_offset + arrow_size + ability_cost_height)
+    def _paintNoCostArrow(self, height_offset: int, ability_height: int):
+        height = ability_height - (self._ability_arrow_size() * 2)
+        height = min(self._ability_cost_height(), height)
+
+        box = (0, height_offset + self._ability_arrow_size(), self._ability_cost_width(), height_offset + self._ability_arrow_size() + height)
         self.draw.rectangle(box)
-        text = self._wrapAndResizeText((0, box[1]), "0", large_text_size, large_text_size, Decoration.BOLD)
+
+        text = self._wrapAndResizeText((0, box[1]), "0", height, self._large_text_size(), Decoration.BOLD)
         self._paintCenteredText(text, box)
 
     def _paintCenteredText(self, text: ImageText.Text, outside_bbox: tuple[float, float, float, float]):

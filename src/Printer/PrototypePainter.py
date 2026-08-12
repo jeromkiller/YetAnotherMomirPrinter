@@ -4,8 +4,8 @@ from ..MomirVig.MtgCard import PrototypeFace
 class PrototypePainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
-        self.prototypeExplainerSection = CardRegion(self.TypeRegion.get_total_offset(), normal_text_size * 3)
-        self.prototypeCostSection = CardRegion(self.TypeRegion.get_total_offset(), normal_text_size)
+        self.prototypeExplainerSection = CardRegion(self.TypeRegion.get_total_offset(), self._normal_text_size() * 3)
+        self.prototypeCostSection = CardRegion(self.TypeRegion.get_total_offset(), self._normal_text_size())
         self.prototypeStatSection = CardRegion(self.prototypeExplainerSection.get_total_offset() - self.StatsRegion.AreaHeight, self.StatsRegion.AreaHeight)
         self.dividerLine = CardRegion(self.prototypeExplainerSection.get_total_offset(), 3)
         self.TextRegion = CardRegion(self.dividerLine.get_total_offset(), self.TextRegion.AreaHeight - self.prototypeExplainerSection.AreaHeight)
@@ -33,4 +33,4 @@ class PrototypePainter(PainterBase):
 
 
     def _paint_prototype_oracle(self, text: str):
-        self._paintWrappedText((0, self.prototypeExplainerSection.HeightOffset), text, normal_text_size, self.prototypeExplainerSection.AreaHeight)
+        self._paintWrappedText((0, self.prototypeExplainerSection.HeightOffset), text, self._normal_text_size(), self.prototypeExplainerSection.AreaHeight)

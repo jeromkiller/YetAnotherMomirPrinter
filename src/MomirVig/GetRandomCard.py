@@ -15,7 +15,10 @@ api_path = "https://api.scryfall.com/cards/random" # mana value 1 for test
 headers = {"User-Agent": "YetAnotherMomirPrinter/0.1",
            "Accept": "*/*"}    
 
-lastFetchTimestamp = 0.0
+# rate limit ourselves to 2 fetches per second
+delay = 0.5
+global lastFetchTimestamp
+lastFetchTimestamp = time.time()
 
 
 class searchParams():
@@ -48,36 +51,37 @@ class searchParams():
 search_params = searchParams(legalities = ["modern"])
 
 def fetch(uri: str, params: str, visited: set[str]):
-    # limit rate ourselves to 10 fetches per second
+    # rate limit ourselves to 2 fetches per second
+    global lastFetchTimestamp
     time_stamp = time.time()
     time_delta = time_stamp - lastFetchTimestamp
-    if time_delta < 0.1:
-        time.sleep(0.1 - time_delta)
+    if time_delta < delay:
+        time.sleep(delay - time_delta)
 
     if uri in visited:
         return None
     
-    uri += "?q=" + params
+    if params:
+        uri += "?q=" + params
     print(f"fetched: {uri}")
     visited.add(uri)
-    return requests.get(uri, headers=headers)
+    response = requests.get(uri, headers=headers)
+    lastFetchTimestamp = time.time()
+    return response
 
 
 def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.MagicCard:
-    response = fetch(uri, params, visited)
-    assert response is not None
-
-    if response.status_code == 404:
-        raise exceptions.CardNotFoundException()
-    elif response.status_code == 503:
-        raise exceptions.UnhandledStatusCodeException(response.reason, response.status_code)
-    elif response.status_code != 200:
-        raise exceptions.UnhandledStatusCodeException(response.json().get("details", "Unknown"), response.status_code)
-
-    print(f"fetched: {response.json().get("scryfall_uri", "")}")
-    card_json = response.json()
+    card_json = fetchObject(uri, params, visited)
     try:
         card = MtgCard.MagicCard(card_json)
+        if card_json.get("layout", "") == "meld":
+            result_uri: str | None = None
+            for part in card_json.get("all_parts", []):
+                if part.get("component", "") == "meld_result":
+                    result_uri = part["uri"]
+            assert result_uri
+            card_json = fetchObject(result_uri, "")
+            card.addSecondFace(card_json)
     except exceptions.CardNotCreatureException as e:
         print(e)
         search_params.ignore_list.add(e.oracle_id)
@@ -90,6 +94,20 @@ def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.Magic
         card.setImage2(fetchArt(card.back_face.image_url))
     #card.extras = fetchExtras(card_json, visited)
     return card
+
+def fetchObject(uri: str, params: str, visited: set[str] = set()):
+    response = fetch(uri, params, visited)
+    assert response is not None
+
+    if response.status_code == 404:
+        raise exceptions.CardNotFoundException()
+    elif response.status_code == 503:
+        raise exceptions.UnhandledStatusCodeException(response.reason, response.status_code)
+    elif response.status_code != 200:
+        raise exceptions.UnhandledStatusCodeException(response.json().get("details", "Unknown"), response.status_code)
+
+    print(f"Got card: {response.json().get("scryfall_uri", "")}")
+    return response.json()
 
 def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
     print(f"Getting random card with cost {cost}")

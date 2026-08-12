@@ -5,9 +5,9 @@ class FlipPainter(PainterBase):
     def __init__(self, canvas_size: tuple[int, int]):
         super().__init__(canvas_size)
         image_height = int(self.canvas_size[0] * 2 / 4)
-        text_height = int((self.canvas_size[1] - ((2 * self.TitleRegion.get_total_offset()) + (2 * large_text_size) + image_height + self.ArtistRegion.AreaHeight)) / 2)
+        text_height = int((self.canvas_size[1] - ((2 * self.TitleRegion.get_total_offset()) + (2 * self._large_text_size()) + image_height + self.ArtistRegion.AreaHeight)) / 2)
         self.TextRegion = CardRegion(self.TitleRegion.get_total_offset(), text_height)
-        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), large_text_size)
+        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), self._large_text_size())
         self.ImageRegion = CardRegion(self.TypeRegion.get_total_offset(), image_height)
         self.StatsRegion.HeightOffset = self.ImageRegion.HeightOffset - self.StatsRegion.AreaHeight
 

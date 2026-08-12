@@ -3,10 +3,6 @@ from ..MomirVig.MtgCard import MagicCard
 from .TextDecorators import Decoration
 from dataclasses import dataclass
 
-large_text_size = 20
-normal_text_size = 15
-tiny_text_size = 10
-
 @dataclass
 class CardRegion():
     HeightOffset: int
@@ -23,21 +19,32 @@ class PainterBase():
         self.obscured_areas: list[tuple[float, float, float, float]] = list()
 
         # fonts
-        self.font_large = ImageFont.truetype("Font/SwanseaBold-D0ox.ttf", size=large_text_size)
-        self.font_normal = ImageFont.truetype("Font/Swansea-q3pd.ttf", size=normal_text_size)
-        self.font_small = ImageFont.load_default()
-        self.font_tiny = ImageFont.truetype("Font/Swansea-q3pd.ttf", size=tiny_text_size)
+        self.font_large = ImageFont.truetype("Font/SwanseaBold-D0ox.ttf", size=self._large_text_size())
+        self.font_normal = ImageFont.truetype("Font/Swansea-q3pd.ttf", size=self._normal_text_size())
+        self.font_small = ImageFont.truetype("Font/Swansea-q3pd.ttf", size=self._small_text_size())
 
         # card area sizes
-        self.TitleRegion = CardRegion(0, large_text_size)
+        self.TitleRegion = CardRegion(0, self._large_text_size())
         # image size is roughly 4:3, 
         image_height = int(self.canvas_size[0] * 3 / 4)
         self.ImageRegion = CardRegion(self.TitleRegion.get_total_offset(), image_height)
-        self.TypeRegion = CardRegion(self.ImageRegion.get_total_offset(), large_text_size)
-        self.ArtistRegion = CardRegion(self.canvas_size[1] - 10, 10)
-        self.StatsRegion = CardRegion(self.canvas_size[1] - large_text_size - 2, large_text_size + 2)
+        self.TypeRegion = CardRegion(self.ImageRegion.get_total_offset(), self._large_text_size())
+        self.ArtistRegion = CardRegion(self.canvas_size[1] - self._small_text_size(), self._small_text_size())
+        self.StatsRegion = CardRegion(self.canvas_size[1] - self._huge_text_size() + 2, self._huge_text_size())
         text_height = self.ArtistRegion.HeightOffset - self.TypeRegion.get_total_offset()
         self.TextRegion = CardRegion(self.TypeRegion.get_total_offset(), text_height)
+
+    def _huge_text_size(self) -> int:
+        return 25
+
+    def _large_text_size(self) -> int:
+        return 20
+    
+    def _normal_text_size(self) -> int:
+        return 15
+    
+    def _small_text_size(self) -> int:
+        return 11
 
     def _reset(self):
         self.draw.rectangle([(0, 0), self.canvas_size], fill=1)
@@ -144,16 +151,16 @@ class PainterBase():
         return wrapped
 
     def _paintTitle(self, card_name: str):
-        self._paintWrappedText((0, self.TitleRegion.HeightOffset), card_name, large_text_size, self.TitleRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((0, self.TitleRegion.HeightOffset), card_name, self._large_text_size(), self.TitleRegion.AreaHeight, Decoration.BOLD)
 
     def _paintCost(self, cost: str):
-        self._paintRightJustifiedText((0, self.TitleRegion.HeightOffset), cost, self.TitleRegion.AreaHeight, Decoration.BOLD)
+        self._paintRightJustifiedText((0, self.TitleRegion.HeightOffset), cost, self._large_text_size(), Decoration.BOLD)
 
     def _paintStats(self, stats:str, height: int):
         if not stats:
             return
         
-        bbox = self._paintRightJustifiedText((5, height), stats, 25, Decoration.BOLD)
+        bbox = self._paintRightJustifiedText((5, height), stats, self._huge_text_size(), Decoration.BOLD)
         border = (bbox[0] - 4, bbox[1] - 3, bbox[2] + 3, bbox[3] + 3)
         self.draw.rounded_rectangle(border, 6)
         self._reserveBoundingBox(border)
@@ -170,12 +177,12 @@ class PainterBase():
         self._reserveBoundingBox(rectangle)
 
     def _paintTypeline(self, typeline: str):
-        self._paintWrappedText((0, self.TypeRegion.HeightOffset), typeline, large_text_size, self.TypeRegion.AreaHeight, Decoration.BOLD)
+        self._paintWrappedText((0, self.TypeRegion.HeightOffset), typeline, self._large_text_size(), self.TypeRegion.AreaHeight, Decoration.BOLD)
 
     def _paintOracle(self, text: str):
-        self._paintWrappedText((0, self.TextRegion.HeightOffset), text, normal_text_size, self.TextRegion.AreaHeight)
+        self._paintWrappedText((0, self.TextRegion.HeightOffset), text, self._normal_text_size(), self.TextRegion.AreaHeight)
 
     def _paintArtistCredit(self, credit: str):
-        artist_text = ImageText.Text("Artist: " + credit, mode="1")
+        artist_text = ImageText.Text("Artist: " + credit, self.font_small, mode="1")
         self._paintText((0, self.ArtistRegion.HeightOffset), artist_text)
     

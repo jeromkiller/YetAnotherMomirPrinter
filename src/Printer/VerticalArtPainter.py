@@ -12,7 +12,7 @@ class VerticalImagePainter(PainterBase):
         self.ExplainerRegion = CardRegion(self.TitleRegion.get_total_offset(), saga_text_height)
         self.TextRegion = CardRegion(self.TitleRegion.get_total_offset(), saga_text_height)
         self.ImageRegion = CardRegion(self.TitleRegion.get_total_offset(), image_height)
-        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), large_text_size)
+        self.TypeRegion = CardRegion(self.TextRegion.get_total_offset(), self._large_text_size())
 
     def _getImageWidth(self) -> int:
         return int(self.canvas_size[0] / 2)
@@ -41,12 +41,12 @@ class VerticalImagePainter(PainterBase):
         self._reserveBoundingBox(rectangle)
 
     def _paintExplainer(self, explainer_text: str):
-        explainer_bbox = self._paintWrappedText((self._getTextOffset(), self.ExplainerRegion.HeightOffset), explainer_text, normal_text_size, self.ExplainerRegion.AreaHeight)
+        explainer_bbox = self._paintWrappedText((self._getTextOffset(), self.ExplainerRegion.HeightOffset), explainer_text, self._normal_text_size(), self.ExplainerRegion.AreaHeight)
         self.TextRegion = CardRegion(int(explainer_bbox[3] + 1), int(self.TypeRegion.HeightOffset - explainer_bbox[3] + 1))
 
     def _findTextSize(self, text_sections: list[str], horizontal_offset: int) -> int:
         # test wrap the text
         combined_text = "\n---\n".join(text_sections)
-        wrapped_text = self._wrapAndResizeText((horizontal_offset, self.TextRegion.HeightOffset), combined_text, normal_text_size, self.TextRegion.AreaHeight)
+        wrapped_text = self._wrapAndResizeText((horizontal_offset, self.TextRegion.HeightOffset), combined_text, self._normal_text_size(), self.TextRegion.AreaHeight)
         assert isinstance(wrapped_text.font, FreeTypeFont)
         return int(wrapped_text.font.size)
