@@ -17,6 +17,7 @@ from .BattlePainter import BattlePainter
 from .CasePainter import CasePainter
 from .ClassPainter import ClassPainter
 from .MeldPainter import MeldPainter
+from .SpacecraftPainter import SpaceCraftPainter
 
 class CardRegion():
     def __init__(self, HeightOffset: int, AreaHeight: int):
@@ -114,6 +115,10 @@ class BitmapPrinter():
                 return painter.canvas
         elif isinstance(face, BattleFace):
             painter = BattlePainter(self.canvas_size)
+            painter.paint_card(face)
+            return painter.canvas
+        elif isinstance(face, SpacecraftFace):
+            painter = SpaceCraftPainter(self.canvas_size)
             painter.paint_card(face)
             return painter.canvas
         

@@ -361,6 +361,7 @@ class BattleFace(CardFace):
     @staticmethod
     def num_parts_consumed() -> int:
         return 1
+    
 class MeldFace(DefaultFace):
     def __init__(self, json, card_part_offset: int):
         super().__init__(json, card_part_offset)
@@ -386,6 +387,37 @@ class MeldPlaneswalkerFace(PlaneswalkerFace):
                 break
         assert first_component
         self.text_side: str = first_component.get("name", "")
+
+@dataclass(frozen=True)
+class SpacecraftPart():
+    station: str
+    oracle: str
+
+class SpacecraftFace(CardFace):
+    def __init__(self, json, card_part_offset: int):
+        super().__init__(json, card_part_offset)
+        face = self.get_face(json, card_part_offset)
+
+        self.name: str = face.get("name", "")
+        self.cost: str = face.get("mana_cost", "")
+        self.colors: str = "".join(map(str, face.get("colors", [])))
+        self.type: str = face.get("type_line", "")
+        self.spacecraft_parts: list[str | SpacecraftPart] = list()
+        
+        oracle_parts = face.get("oracle_text", "").split("\n")
+        for part in oracle_parts:
+            split_oracle = list(part.split(" | ", 1))
+            if len(split_oracle) >= 2:
+                self.spacecraft_parts.append(SpacecraftPart(split_oracle[0], split_oracle[1]))
+            else:
+                self.spacecraft_parts.append(part)
+
+        if "power" in face and "toughness" in face:
+            self.stats = f"{face.get("power", "")}/{face.get("toughness", "")}"
+
+    @staticmethod
+    def num_parts_consumed() -> int:
+        return 1
 
 class MagicCard():
     def __init__(self, json):
@@ -439,7 +471,7 @@ class MagicCard():
         
         if layout == "normal":
             if "Spacecraft" in type or "Planet" in type:
-                layout = "unsupported"
+                layout = "spacecraft"
             elif "Planeswalker" in type:
                 layout = "planeswalker"
 
@@ -481,6 +513,8 @@ class MagicCard():
                 return SplitFace(json, card_part_offset)
         elif layout == "battle":
             return BattleFace(json, card_part_offset)
+        elif layout == "spacecraft":
+            return SpacecraftFace(json, card_part_offset)
         
         raise CardNotParsableException(json.get("name", "Unknown Cardname"), json.get("id", "Unknown card_id"))
 
