@@ -5,7 +5,7 @@ from PIL import Image, ImageFile
 from . import exceptions
 
 # edge cases:
-# - 0 cost cards with the creture filter includes lands that transform into creatures
+# - 0 cost cards with the creature filter includes lands that transform into creatures
 #   removing filtering out lands will also remove the dryad arbour
 #   Asmoranomardicadaistinaculdacar may be included in the 0 cost cards dispite her only be castable through an alternate cost
 # - some transforming cards with non-creature fronts and creature backs are included
@@ -70,7 +70,7 @@ def fetch(uri: str, params: str, visited: set[str]):
     return response
 
 
-def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.MagicCard:
+def fetchCard(uri: str, params: str, visited: set[str]) -> MtgCard.MagicCard:
     card_json = fetchObject(uri, params, visited)
     try:
         card = MtgCard.MagicCard(card_json)
@@ -86,7 +86,7 @@ def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.Magic
         print(e)
         search_params.ignore_list.add(e.oracle_id)
         # try again
-        return fetchCard(uri, params + "-oracle_id:" + e.oracle_id)
+        return fetchCard(uri, params + "-oracle_id:" + e.oracle_id, visited)
     
     if card.front_face.image_url:
         card.setImage(fetchArt(card.front_face.image_url))
@@ -95,7 +95,7 @@ def fetchCard(uri: str, params: str, visited: set[str] = set()) -> MtgCard.Magic
     #card.extras = fetchExtras(card_json, visited)
     return card
 
-def fetchObject(uri: str, params: str, visited: set[str] = set()):
+def fetchObject(uri: str, params: str, visited: set[str]):
     response = fetch(uri, params, visited)
     assert response is not None
 
@@ -112,7 +112,12 @@ def fetchObject(uri: str, params: str, visited: set[str] = set()):
 def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
     print(f"Getting random card with cost {cost}")
     params = search_params.get_params(mana=cost)
-    return fetchCard(api_path, params)
+    return fetchCard(api_path, params, set())
+
+def fetchNamedCard(name: str) -> MtgCard.MagicCard:
+    print(f"fetching card with name: {name}")
+    path = "https://api.scryfall.com/cards/named"
+    return fetchCard(f"{path}?exact={name}", "", set())
 
 
 def fetchArt(uri: str) -> ImageFile.ImageFile:
@@ -143,4 +148,3 @@ def fetchExtras(card_json, visited: set[str]) -> list[MtgCard.MagicCard]:
             token.setImage2(fetchArt(token.image_url_2))
         extras.append(token)
     return extras
-
