@@ -1,4 +1,4 @@
-from PIL.Image import Image
+from PIL import Image
 
 from .PainterBase import *
 from ..MomirVig.MtgCard import BattleFace
@@ -26,7 +26,7 @@ class BattlePainter(PainterBase):
     def _get_horizontal_offset(self) -> int:
         return self.ArtistRegion.AreaHeight
 
-    def _paintImage(self, image: Image | None = None):
+    def _paintImage(self, image: Image.Image | None = None):
         image_width = self.canvas_size[1] - self.ArtistRegion.AreaHeight
         if image:
             im = ImageOps.fit(image, (image_width, self.ImageRegion.AreaHeight))

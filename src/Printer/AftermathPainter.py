@@ -1,4 +1,4 @@
-from PIL.Image import Image
+from PIL import Image
 
 from .PainterBase import *
 from ..MomirVig.MtgCard import SplitSide, SplitFace
@@ -34,7 +34,7 @@ class AftermathPainter(PainterBase):
     def _getAftermathOffset(self) -> int:
         return self.TextRegion.get_total_offset() + 3
 
-    def _paintImage(self, image: Image | None = None):
+    def _paintImage(self, image: Image.Image | None = None):
         if image:
             im = image.crop((0, 0, image.width * (3/5), image.height))
             im = ImageOps.fit(im, (self.canvas_size[0], self.ImageRegion.AreaHeight))
@@ -45,7 +45,7 @@ class AftermathPainter(PainterBase):
         self.draw.rectangle(rectangle)
         self._reserveBoundingBox(rectangle)
 
-    def _paintAftermathImage(self, image: Image | None = None):
+    def _paintAftermathImage(self, image: Image.Image | None = None):
         if image:
             im = image.crop((image.width * (3/5), 0, image.width, image.height))
             im = ImageOps.fit(im, (self.rightSideWidth, self.ImageRegion.AreaHeight))

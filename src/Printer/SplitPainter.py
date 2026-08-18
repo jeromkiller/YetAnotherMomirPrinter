@@ -1,4 +1,4 @@
-from PIL.Image import Image
+from PIL import Image
 
 from .PainterBase import *
 from ..MomirVig.MtgCard import SplitSide, SplitFace
@@ -44,7 +44,7 @@ class SplitPainter(PainterBase):
         offset = self._get_horizontal_offset(right_side)
         self._paintWrappedText((offset, self.TitleRegion.HeightOffset), card_name, self._large_text_size(), self.TitleRegion.AreaHeight, Decoration.BOLD)
 
-    def _paintImage(self, image: Image | None = None):
+    def _paintImage(self, image: Image.Image | None = None):
         if not image:
             self._paintSplitImage(None, False)
             self._paintSplitImage(None, True)
@@ -56,7 +56,7 @@ class SplitPainter(PainterBase):
         self._paintSplitImage(left_img, False)
         self._paintSplitImage(right_img, True)
 
-    def _paintSplitImage(self, image: Image | None = None, right_side: bool = False):
+    def _paintSplitImage(self, image: Image.Image | None = None, right_side: bool = False):
         offset = self._get_horizontal_offset(right_side)
         if image is not None:
             im = image

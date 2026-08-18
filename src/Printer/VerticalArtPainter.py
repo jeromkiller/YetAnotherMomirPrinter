@@ -1,4 +1,4 @@
-from PIL.Image import Image
+from PIL import Image
 from PIL.ImageFont import FreeTypeFont
 
 from .PainterBase import *
