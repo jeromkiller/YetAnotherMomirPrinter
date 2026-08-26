@@ -22,6 +22,11 @@ class CardFace():
 
         self.name = ""
         self.image_url: str = ""
+        self.type = ""
+        self.stats = ""
+        
+        self.oracle_id = json.get("oracle_id")
+
         if "image_uris" in face:
             self.image_url = face.get("image_uris", json.get("image_uris", {})).get("art_crop", None)
         else:

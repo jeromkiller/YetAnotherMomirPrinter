@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    
+</head>
+
+<style>
+    body {
+        background-color: lightblue;
+    }
+
+    .island {
+        background-color: aliceblue;
+        border-radius: 15px;
+        padding: 15px;
+        width: 100%;
+        margin: 5px;
+    }
+
+    .island.error {
+        background-color: rgb(255, 94, 94);
+    }
+
+    .grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: repeat(3, 1fr);
+    }
+
+    .square {
+        aspect-ratio: 5/4;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    footer {
+        min-height: auto;
+    }
+
+    main {
+        flex: 1;
+    }
+
+    .specialButtons {
+        background-color:rgb(190, 212, 241);
+        border-radius: 7px;
+        padding: 10px;
+        grid-column: 4;
+        grid-row: 1 / 4;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr;
+        grid-auto-rows: repeat(3, 1fr);
+    }
+</style>
+
+<body>
+    <nav class="navbar navbar-expand navbar-dark bg-dark ps-5">
+        <div class="navbar-brand">
+            <a href="https://github.com/jeromkiller/YetAnotherMomirPrinter">
+                <svg style="height: 30px; width: 30px; color: white;">
+                    <use href="media/github-brands-solid-full.svg"></use>
+                </svg>
+            </a>
+        </div>
+
+        <div class="navbar-brand ">
+            Yet another Momir Printer
+        </div>
+    </nav>
+
+    <noscript>
+        <div class="island shadow">
+            <h1>Javascript is required to run this page</h1>
+        </div>
+    </noscript>
+
+    <div class="collapse" id="error_section">
+        <div class="island shadow error">
+            <p >
+            <btn class="btn btn-close" type="button" data-bs-toggle="collapse" href="#error_section" role="button" aria-expanded="false" aria-controls="error_section"></btn>
+            <a id="error_message">Some error message here</a>
+            </p>
+        </div>
+    </div>
+
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-md-6 col-xl-">
+                    <div class="island shadow">
+                        <div class="grid">
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">1</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">2</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">3</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">4</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">5</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">6</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">7</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">8</button>
+                            <button type="button" class="btn btn-primary square" onclick="printRandomCard(this)">9</button>
+
+                            <div class="specialButtons">
+                                <button type="button" class="btn btn-success" onclick="increaseSpecialCost()">+</button>
+                                <button type="button" class="btn btn-primary" id="specialCostButton" onclick="printRandomCard(this)">10</button>
+                                <button type="button" class="btn btn-danger" onclick="decreaseSpecialCost()">-</button>
+                            </div>
+                        </div>
+                        <div class="accordion" id="settingsAccordion" style="margin-top: 10px;">
+                            <div class="accordion-item">
+                                <h1 class="accordion-header" id="SettingsHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                        Options
+                                    </button>
+                                </h1>
+                                <div id="collapseOne" class="accordion-collapse collapse hide"
+                                    aria-labelledby="SettingsHeading" data-bs-parent="#settingsAccordion">
+                                    <div class="accordion-body">
+                                        <div class="mb-3">
+                                            <label for="select_format" class="form-label">Format</label>
+                                            <select class="form-select" id="select_format">
+                                                <option>All</option>
+                                                <option>Standard</option>
+                                                <option>Modern</option>
+                                                <option>Legacy</option>
+                                                <option>Pauper</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-12 col-md-6 col-xl-5">
+                    <div class="island shadow">
+                        <ul class="nav nav-tabs" id="print_tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="extras_tab_button" data-bs-toggle="tab"
+                                    data-bs-target="#extras_tab" type="button" role="tab" aria-controls="extras_tab"
+                                    aria-selected="true">Tokens</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="history_tab_button" data-bs-toggle="tab"
+                                    data-bs-target="#history_tab" type="button" role="tab" aria-controls="history_tab"
+                                    aria-selected="false">History</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="extras_tab" role="tabpanel"
+                                aria-labelledby="extras-tab">
+                                <ul class="list-group" id="extras_list">
+                                    <li class="list-group-item">
+                                        No cards with tokens printed yet.
+                                    </li>
+                                    <!--
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Elf Warrior - Token (1/1)
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Cat - Token (1/1)
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Beast - Token (3/3)
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    -->
+                                </ul>
+                            </div>
+                            <div class="tab-pane fade" id="history_tab" role="tabpanel" aria-labelledby="history-tab">
+                                <ul class="list-group" id="history_list">
+                                    <li class="list-group-item">
+                                        No cards Printed yet.
+                                    </li>
+                                    <!--
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Dyrwin Elite
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        grim fighter
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Goliath, King of beasts
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Some other big creature
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Goblin Bastard
+                                        <button class="btn btn-primary">print</button>
+                                    </li>
+                                    -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="container">
+            <p>Powered by <a href="https://scryfall.com/">scryfall</a></p>
+            <p>Magic the gathering is owned by Wizards of the Coast</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <script src="script/printer.js" type="text/Javascript" defer></script>
+</body>
+
+
+
+</html>
