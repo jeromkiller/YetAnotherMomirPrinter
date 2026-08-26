@@ -1,4 +1,4 @@
-from PIL.Image import Image
+from PIL import Image
 
 from .PainterBase import *
 from ..MomirVig.MtgCard import PlaneswalkerFace, PlaneswalkerAbilityBlock
@@ -32,7 +32,7 @@ class PlaneswalkerPainter(PainterBase):
         self.TypeRegion.HeightOffset = self.ImageRegion.get_total_offset()
         self.TextRegion = CardRegion(self.TypeRegion.get_total_offset(), self.ArtistRegion.HeightOffset - self.TypeRegion.get_total_offset())
 
-    def _paintImage(self, image: Image | None = None):
+    def _paintImage(self, image: Image.Image | None = None):
         if image is not None:
             image = ImageOps.contain(image, (self.canvas_size[0], self.canvas_size[1]))
             self._ResizeImageRegion(image.height)
