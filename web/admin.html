@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="script/jquery.js"></script>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet"></style>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    
+</head>
+
+<style>
+    body {
+        background-color: lightsalmon;
+    }
+
+    .island {
+        background-color: aliceblue;
+        border-radius: 15px;
+        padding: 15px;
+        width: 100%;
+        margin: 5px;
+    }
+
+    .island.error {
+        background-color: rgb(255, 94, 94);
+    }
+
+    .grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: repeat(3, 1fr);
+    }
+
+    .square {
+        aspect-ratio: 5/4;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    footer {
+        min-height: auto;
+    }
+
+    main {
+        flex: 1;
+    }
+
+    .specialButtons {
+        background-color:rgb(190, 212, 241);
+        border-radius: 7px;
+        padding: 10px;
+        grid-column: 4;
+        grid-row: 1 / 4;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr;
+        grid-auto-rows: repeat(3, 1fr);
+    }
+
+    .stack {
+        display: flex;
+        align-items:baseline;
+        justify-content:baseline;
+        float: left;
+    }
+</style>
+
+<body>
+    <nav class="navbar navbar-expand navbar-dark bg-dark ps-5">
+        <div class="navbar-brand">
+            <a href="https://github.com/jeromkiller/YetAnotherMomirPrinter">
+                <svg style="height: 30px; width: 30px; color: white;">
+                    <use href="media/github-brands-solid-full.svg"></use>
+                </svg>
+            </a>
+        </div>
+
+        <div class="navbar-brand ">
+            Yet another Momir Printer
+        </div>
+    </nav>
+
+    <noscript>
+        <div class="island shadow">
+            <h1>Javascript is required to run this page</h1>
+        </div>
+    </noscript>
+
+    <div class="collapse" id="error_section">
+        <div class="island shadow error">
+            <p >
+            <btn class="btn btn-close" type="button" data-bs-toggle="collapse" href="#error_section" role="button" aria-expanded="false" aria-controls="error_section"></btn>
+            <a id="error_message">Some error message here</a>
+            </p>
+        </div>
+    </div>
+
+    <main>
+        <div class="container">
+            <div class="island shadow">
+                <h1>Change Network Settings:</h1>
+                <label for="currently_connected">Currently connected to: <label id="currently_connected">Not connected</label></label>
+                
+                <div class="input-group">
+                    <span class="input-group-text">SSID</span>
+                        <select class="form-select" id="select_ssid" disabled="true">
+                            <option>No networks nearby</option>
+                        </select>
+                        <input id="hidden_network_input" type="text" class="form-control" placeholder="Hidden SSID" aria-label="Network Password" style="display: none">
+                    <span class="input-group-text">
+                        <input class="form-check-input" type="checkbox" id="hidden_network" onclick="swapHiddenNetworkTextbox(this.checked)">
+                        <label class="forum-check-label" for="hidden_network">
+                            Hidden
+                        </label>
+                    </span>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-text">Password</span>
+                    <input id="ssid_password" type="password" class="form-control" placeholder="Network Password" aria-label="Network Password">
+                </div>
+                <button class="btn btn-primary" onclick="refreshSSIDs()">Refresh</button>
+                <button class="btn btn-success" onclick="connectNewNetwork()">Connect</button>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="container">
+            <p>Powered by <a href="https://scryfall.com/">scryfall</a></p>
+            <p>Magic the gathering is owned by Wizards of the Coast</p>
+        </div>
+    </footer>
+
+    <script src="bootstrap/js/bootstrap.min.js" type="text/Javascript"></script>
+    <script src="script/networksettings.js" type="text/Javascript" defer></script>
+</body>
+
+
+
+</html>

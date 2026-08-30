@@ -23,13 +23,21 @@ lastFetchTimestamp = time.time()
 
 
 card_not_found_messages: list[str] = list()
+global randomized_message_bag
+randomized_message_bag: list[str] = list()
+
 with open("404Messages.txt") as messages:
     for line in messages.readlines():
         card_not_found_messages.append(line)
 
 def getCardNotFoundMessage(cmc: int):
-    random_line = random.choice(card_not_found_messages)
-    random_line.replace("[x]", str(cmc))
+    global randomized_message_bag
+    if not randomized_message_bag:
+        randomized_message_bag = list(card_not_found_messages)
+        random.shuffle(randomized_message_bag)
+
+    random_line = randomized_message_bag.pop(0)
+    random_line = random_line.replace("[x]", str(cmc))
     return random_line
 
 class searchParams():

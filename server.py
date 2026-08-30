@@ -3,6 +3,7 @@ from escpos import printer
 from src.MomirVig import exceptions
 from src.MomirVig.GetRandomCard import *
 from src.Printer.BitmapPrinter import BitmapPrinter
+import NetworkSetup
 
 
 width = 380     # Soft cap, can be grown or shrunk slightly to make the width fit better in a sleeve
@@ -99,8 +100,8 @@ def print_card_by_id(oracle_id: str):
         card = fetchCardByOracleId(oracle_id)
         image = cardBuilder.paint_card(card)
         image = image.rotate(90, expand=True)
-        #pos.image(image)
-        #pos.cut()
+        pos.image(image)
+        pos.cut()
     except Exception as e:
         abort(500, error_message("Internal Server Error: " + str(e)))
 
@@ -118,3 +119,26 @@ def get_status():
 
     return {"online": True, "paper": statuses[paper_status]}
 
+
+
+@app.route("/settings/ssids")
+def get_available_ssids():
+    connected_ssid = NetworkSetup.getConnectedSSID()
+    local_nonconnected_ssids = NetworkSetup.getUnconnectedSSIDs()
+    return {
+        "connected_to": connected_ssid,
+        "available": local_nonconnected_ssids
+        }, 200
+
+@app.route("/settings/changeNetwork", methods=['POST'])
+def change_ssid():   # todo settings to body
+    json = request.get_json()
+    ssid = json.get("ssid", "")
+    passwd = json.get("password", "")
+    hidden = json.get("hidden", "") == "true"
+
+    if not ssid:
+        abort(400, error_message("SSID cannot be empty"))
+
+    NetworkSetup.changeNetwork(ssid, passwd, hidden)
+    return "", 204
