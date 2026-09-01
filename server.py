@@ -82,7 +82,8 @@ def print_random_card(cmc: int | None = None):
         pos.cut()
     except exceptions.CardNotFoundException:
         errorLine = getCardNotFoundMessage(cmc)
-        pos.text(errorLine)
+        pos.block_text(errorLine)
+        pos.ln(3)
         pos.cut()
         return error_message(f"No applicable creature found for {cmc} mana"), 404
     except Exception as e:
@@ -141,4 +142,65 @@ def change_ssid():   # todo settings to body
         abort(400, error_message("SSID cannot be empty"))
 
     NetworkSetup.changeNetwork(ssid, passwd, hidden)
+    printConnectionStatus()
+
     return "", 204
+
+
+def printHeader():
+    pos.block_text("Yet another momir printer")
+    pos.ln()
+    pos.block_text("By Jerm")
+    pos.ln(2)
+
+def printConnectionStatus():
+    if NetworkSetup.testNetwork():
+        pos.block_text("Connected to the internet!")
+        pos.ln(2)
+        pos.block_text(f"Connected to: {NetworkSetup.getConnectedSSID()}")
+    else:
+        pos.block_text("No internet connection available.")
+    pos.ln(2)
+        
+
+def printStartPlayingMessage():
+    pos.ln(2)
+    webpage = NetworkSetup.getWebPageUrl()
+    pos.block_text(f"Go to '{webpage}' to start playing")
+    pos.ln(2)
+    pos.qr(webpage, size=6, center=True)
+    pos.ln(1)
+    pos.block_text("Good luck, Have fun! :)")
+
+def printSetupMessage():
+    pos.block_text("For setup connect to the internal network and load the setup page using the details below.")
+    pos.ln(2)
+
+    ssid = NetworkSetup.getSetupSSID()
+    ssid_pass = NetworkSetup.getSetupPassword()
+    is_hidden = NetworkSetup.isSetupSSIDHidden()
+    pos.block_text(f"SSID: {ssid}")
+    pos.ln()
+    pos.block_text(f"Password: {ssid_pass}")
+    pos.ln()
+    pos.block_text(f"This is{' ' if is_hidden else ' not '}a hidden network.")
+    pos.ln(2)
+    pos.qr(f"WIFI:T:WPA;S:{ssid};P:{ssid_pass}{";H:true" if is_hidden else ""};;", size = 6, center=True)
+    pos.ln()
+
+    setup_page = NetworkSetup.getSetupPageUrl()
+    pos.block_text(f"Setup page: {setup_page}")
+    pos.ln(2)
+    pos.qr(setup_page, size = 6, center=True)
+
+with app.app_context():
+    printHeader()
+    printConnectionStatus()
+    if NetworkSetup.testNetwork():
+        printStartPlayingMessage()
+    else:
+        printSetupMessage()
+    
+    pos.ln(3)
+    pos.cut()
+    
