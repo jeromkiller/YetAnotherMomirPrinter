@@ -74,8 +74,17 @@ def print_random_card(cmc: int | None = None):
     if cmc is None or cmc < 0 or cmc > 20:
         abort(400, error_message("CMC must be between 0 and 20"))
 
+    json = request.get_json()
+    fmt = json.get("format", "All")
+    card_type = list(map(lambda s: s.lower(), json.get("type", ["creature"])))
+
+    params = searchParams(mana=cmc, legality=fmt, card_types=card_type)
+    valid, reason = params.verify()
+    if not valid:
+        abort(400, reason)
+
     try:
-        card = fetchRandomCard(cmc)
+        card = fetchRandomCard(params)
         image = cardBuilder.paint_card(card)
         image = image.rotate(90, expand=True)
         pos.image(image)

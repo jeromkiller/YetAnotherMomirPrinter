@@ -21,7 +21,7 @@ def get_momir_card(cmc: int, as_image: bool):
             print("printer not connected")
             as_image = True
 
-    card = fetchRandomCard(cmc)
+    card = fetchRandomCard(searchParams(mana=cmc))
     
     images = list[Image]()
     painter = BitmapPrinter((width, height))

@@ -41,12 +41,40 @@ def getCardNotFoundMessage(cmc: int):
     return random_line
 
 class searchParams():
-    def __init__(self, mana: int = 0, legalities: list[str] = list(), mtg_sets: list[str] = list()) -> None:
+    def __init__(self, mana: int = 1, legality: str = "", mtg_sets: list[str] = list(), card_types: list[str] = ["Creature"]) -> None:
         self.mana_value: int = mana
-        self.legalities: list[str] = legalities
-        self.mtg_sets: list[str] = mtg_sets
+        self.legality: str = legality.lower()
+        self.mtg_sets: list[str] = [s.lower() for s in mtg_sets]
+        self.types: list[str] = [t.lower() for t in card_types]
         self.ignore_list: set[str] = set()
-        self.static_params: list[str] = ["type:creature", "game:paper", "lang:en","-frame:fandfc", "not:meld_result", "-t:battle", "not:funny"]
+        self.static_params: list[str] = ["game:paper", "lang:en", "not:meld_result", "not:funny"]
+
+    def verify(self) -> tuple[bool, str]:
+        reasons: list[str] = list()
+        valid: bool = True
+
+        valid_types = ["creature", "planeswalker", "artifact", "enchantment", "battle"]
+        valid_formats = ["all", "standard", "modern", "legacy", "pauper"]
+
+        if self.mana_value >= 0:
+            valid = False
+            reasons.append("Mana Value can't be below zero")
+        if self.mana_value <= 20:
+            valid = False
+            reasons.append("Mana Value can't higher then twenty")
+        for t in self.types:
+            if t not in valid_types:
+                valid = False
+                reasons.append(f"{t} is not a valid card type")
+        if self.legality not in valid_formats:
+            valid = False
+            reasons.append(f"{self.legality} is not a valid format")
+
+        reason: str = "All good!"
+        if not valid:
+            reason = ", ".join(reasons) + "."
+
+        return valid, reason
     
     def get_params(self, mana: int | None = None) -> str:
         if mana is not None:
@@ -56,18 +84,23 @@ class searchParams():
         if self.mtg_sets:
             set_params = ["set:" + s for s in self.mtg_sets]
             params.append(f"({" or ".join(set_params)})")
-        if self.legalities:
-            legality_params = ["legal:" + s for s in self.legalities]
+        if self.legality:
+            legality_params = ["legal:" + s for s in self.legality]
             params.append(f"({" or ".join(legality_params)})")
         if self.ignore_list:
             ignore_params = ["-oracle_id:" + oid for oid in self.ignore_list]
             params.extend(ignore_params)
+        if self.types:
+            type_params = ["t:" + t for t in self.types]
+            params.append(f"({" or ".join(type_params)})")
+        if "battle" not in self.types:
+            params.append("-t:battle")
+        if "enchantment" not in self.types:
+            params.append("-frame:fandfc")
         params.extend(self.static_params)
 
         output = "+".join(params)
         return output
-
-search_params = searchParams(legalities = ["modern"])
 
 def fetch(uri: str, params: str, visited: set[str]):
     # rate limit ourselves to 2 fetches per second
@@ -124,16 +157,18 @@ def fetchObject(uri: str, params: str, visited: set[str]):
     print(f"Got card: {response.json().get("scryfall_uri", "")}")
     return response.json()
 
-def fetchRandomCard(cost: int) -> MtgCard.MagicCard:
-    print(f"Getting random card with cost {cost}")
-    params = search_params.get_params(mana=cost)
+def fetchRandomCard(search_params: searchParams = searchParams()) -> MtgCard.MagicCard:
+    print(f"Getting random card with cost {search_params.mana_value}")
+    params = search_params.get_params()
     visited: set[str] = set()
     card = fetchCard(api_path, params, visited)
-    while "Creature" not in card.front_face.type:
+
+    typeline = card.front_face.type.lower()
+    while not any([t in typeline for t in search_params.types]):
         # this card isn't a creature on its front side, try again
-        print("Error, random card is not a creature on its front face")
+        print("Error, random card does not match any of the requested types on its front face")
         search_params.ignore_list.add(card.front_face.oracle_id)
-        params = search_params.get_params(mana=cost)
+        params = search_params.get_params()
         card = fetchCard(api_path, params, visited)
     return card
 
