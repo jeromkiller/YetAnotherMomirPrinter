@@ -14,11 +14,12 @@ To get a random card, plug in your Epson TM-T88V and use the following command:
 where x is your desired mana value
 
 ## Features
- - Get a random creatures card of a specified mana value from scryfall through the command line.
- - Print them straight onto 80mm thermal paper
- - Custom layouts for level up, flip and saga creatures
- - Automatically prints any relevant tokens too
+ - Print randomized cards based on mana value and card type
+ - Custom layouts, supporting nearly all card layouts (including dual faced and meld cards)
+ - Optional web interface for convenient use on any device
 
 ## Future work
-I'd like to add a proper user interface to this at some point.
-A couple more unit tests also won't hurt
+ - Improvements to the web page
+ - Local oracle database for offline play / whenever scryfall is slow
+ - Setup Instructions for web interface on raspberry pi
+ - Add arrows denoting flipsides for dual faced and modal dual faced cards
