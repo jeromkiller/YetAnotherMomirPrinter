@@ -75,8 +75,15 @@ def print_random_card(cmc: int | None = None):
         abort(400, error_message("CMC must be between 0 and 20"))
 
     json = request.get_json()
-    fmt = json.get("format", "All")
-    card_type = list(map(lambda s: s.lower(), json.get("type", ["creature"])))
+    try:
+        card_type = CardTypes.try_create(json.get("type", ["creature"]))
+    except KeyError as e:
+        abort(400, "Incorrect Card type submitted")
+
+    try:
+        fmt = Formats.try_create(json.get("format", "All"))
+    except KeyError as e:
+        abort(400, "Incorrect format submitted")
 
     params = searchParams(mana=cmc, legality=fmt, card_types=card_type)
     valid, reason = params.verify()

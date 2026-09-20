@@ -4,6 +4,7 @@ import time
 from PIL import Image, ImageFile
 from . import exceptions
 import random
+from enum import Enum, Flag, auto
 
 # edge cases:
 # - 0 cost cards with the creature filter includes lands that transform into creatures
@@ -40,12 +41,58 @@ def getCardNotFoundMessage(cmc: int):
     random_line = random_line.replace("[x]", str(cmc))
     return random_line
 
+class CardTypes(Flag):
+    @staticmethod
+    def try_create(values: str | list[str]) -> CardTypes:
+        if isinstance(values, str):
+            values = values.lower()
+            return CardTypes[values]
+
+        card_types = CardTypes(0)
+        for value in values:
+            value = value.lower()
+            card_types |= CardTypes[value]
+        return card_types
+    
+    @staticmethod
+    def create(values: str | list[str]) -> CardTypes:
+        if isinstance(values, str):
+            values = values.lower()
+            return CardTypes[values]
+    
+        card_types = CardTypes(0)
+        for value in values:
+            value = value.lower()
+            try:
+                card_type = CardTypes[value]
+                card_types |= card_type
+            except KeyError:
+                continue
+        return card_types
+
+    creature = auto()
+    planeswalker = auto()
+    artifact = auto()
+    enchantment = auto()
+    battle = auto()
+
+class Formats(Enum):
+    @staticmethod
+    def try_create(value: str) -> Formats:
+        return Formats[value.lower()]
+
+    all = auto()
+    standard = auto()
+    modern = auto()
+    legacy = auto()
+    pauper = auto()
+
 class searchParams():
-    def __init__(self, mana: int = 1, legality: str = "", mtg_sets: list[str] = list(), card_types: list[str] = ["Creature"]) -> None:
+    def __init__(self, mana: int = 1, legality: Formats = Formats.all, mtg_sets: list[str] = list(), card_types: CardTypes = CardTypes.creature) -> None:
         self.mana_value: int = mana
-        self.legality: str = legality.lower()
+        self.legality: Formats = legality
         self.mtg_sets: list[str] = [s.lower() for s in mtg_sets]
-        self.types: list[str] = [t.lower() for t in card_types]
+        self.types: CardTypes = card_types
         self.ignore_list: set[str] = set()
         self.static_params: list[str] = ["game:paper", "lang:en", "not:meld_result", "not:funny"]
 
@@ -53,22 +100,12 @@ class searchParams():
         reasons: list[str] = list()
         valid: bool = True
 
-        valid_types = ["creature", "planeswalker", "artifact", "enchantment", "battle"]
-        valid_formats = ["all", "standard", "modern", "legacy", "pauper"]
-
         if self.mana_value >= 0:
             valid = False
             reasons.append("Mana Value can't be below zero")
         if self.mana_value <= 20:
             valid = False
             reasons.append("Mana Value can't higher then twenty")
-        for t in self.types:
-            if t not in valid_types:
-                valid = False
-                reasons.append(f"{t} is not a valid card type")
-        if self.legality not in valid_formats:
-            valid = False
-            reasons.append(f"{self.legality} is not a valid format")
 
         reason: str = "All good!"
         if not valid:
@@ -84,18 +121,18 @@ class searchParams():
         if self.mtg_sets:
             set_params = ["set:" + s for s in self.mtg_sets]
             params.append(f"({" or ".join(set_params)})")
-        if self.legality:
-            legality_params = ["legal:" + s for s in self.legality]
+        if self.legality is not Formats.all:
+            legality_params = ["legal:" + s for s in self.legality.name]
             params.append(f"({" or ".join(legality_params)})")
         if self.ignore_list:
             ignore_params = ["-oracle_id:" + oid for oid in self.ignore_list]
             params.extend(ignore_params)
         if self.types:
-            type_params = ["t:" + t for t in self.types]
+            type_params = ["t:" + str(t.name) for t in self.types]
             params.append(f"({" or ".join(type_params)})")
-        if "battle" not in self.types:
+        if CardTypes.battle not in self.types:
             params.append("-t:battle")
-        if "enchantment" not in self.types:
+        if CardTypes.enchantment not in self.types:
             params.append("-frame:fandfc")
         params.extend(self.static_params)
 
@@ -161,10 +198,16 @@ def fetchRandomCard(search_params: searchParams = searchParams()) -> MtgCard.Mag
     print(f"Getting random card with cost {search_params.mana_value}")
     params = search_params.get_params()
     visited: set[str] = set()
-    card = fetchCard(api_path, params, visited)
 
-    typeline = card.front_face.type.lower()
-    while not any([t in typeline for t in search_params.types]):
+    while True:
+        card = fetchCard(api_path, params, visited)
+
+        typeline = card.front_face.type.lower()
+        card_types = CardTypes.create(list(typeline.split(" ")))
+
+        if card_types & search_params.types:
+            break
+
         # this card isn't a creature on its front side, try again
         print("Error, random card does not match any of the requested types on its front face")
         search_params.ignore_list.add(card.front_face.oracle_id)

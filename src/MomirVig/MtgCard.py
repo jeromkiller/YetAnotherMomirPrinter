@@ -264,6 +264,7 @@ class DualSpellFace(CardFace):
         super().__init__(json, card_part_offset)
         self.spell_1: DefaultFace = DefaultFace(json, card_part_offset)
         self.spell_2: DefaultFace = DefaultFace(json, card_part_offset + 1)
+        self.type = f"{self.spell_1.type} // {self.spell_2.type}"
 
     @staticmethod
     def num_parts_consumed() -> int:
@@ -326,6 +327,7 @@ class SplitFace(CardFace):
         face_2 = self.get_face(json, card_part_offset + 1)
         self.left_side: SplitSide = SplitSide(face_1)
         self.right_side: SplitSide = SplitSide(face_2)
+        self.type = f"{self.left_side.type} // {self.right_side.type}"
 
     @staticmethod
     def num_parts_consumed() -> int:
