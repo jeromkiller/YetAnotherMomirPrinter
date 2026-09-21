@@ -5,6 +5,7 @@ from PIL import Image, ImageFile
 from . import exceptions
 import random
 from enum import Enum, Flag, auto
+from typing import Self
 
 # edge cases:
 # - 0 cost cards with the creature filter includes lands that transform into creatures
@@ -43,7 +44,7 @@ def getCardNotFoundMessage(cmc: int):
 
 class CardTypes(Flag):
     @staticmethod
-    def try_create(values: str | list[str]) -> CardTypes:
+    def try_create(values: str | list[str]) -> Self:
         if isinstance(values, str):
             values = values.lower()
             return CardTypes[values]
@@ -55,7 +56,7 @@ class CardTypes(Flag):
         return card_types
     
     @staticmethod
-    def create(values: str | list[str]) -> CardTypes:
+    def create(values: str | list[str]) -> Self:
         if isinstance(values, str):
             values = values.lower()
             return CardTypes[values]
@@ -78,7 +79,7 @@ class CardTypes(Flag):
 
 class Formats(Enum):
     @staticmethod
-    def try_create(value: str) -> Formats:
+    def try_create(value: str) -> Self:
         return Formats[value.lower()]
 
     all = auto()
@@ -100,10 +101,10 @@ class searchParams():
         reasons: list[str] = list()
         valid: bool = True
 
-        if self.mana_value >= 0:
+        if self.mana_value < 0:
             valid = False
             reasons.append("Mana Value can't be below zero")
-        if self.mana_value <= 20:
+        if self.mana_value > 20:
             valid = False
             reasons.append("Mana Value can't higher then twenty")
 

@@ -88,7 +88,9 @@ async function printRandomCard(button) {
     }
 
     let body = new RandomCardBody(format, types);
-    let response = await fetch(getAddress() + '/api/print/random/' + button.innerText, { method: "post", body: JSON.stringify(body) });
+    let response = await fetch(getAddress() + '/api/print/random/' + button.innerText, { 
+        method: "post", headers: {  "Content-type": "application/json; charset=UTF-8" },
+        body: JSON.stringify(body) });
     if (!response.ok) {
         const data = await response.json();
         await openError(data.message);
