@@ -1,6 +1,13 @@
 const specialCostButton = document.getElementById('specialCostButton')
 const historyList = document.getElementById('history_list')
 const extrasList = document.getElementById('extras_list')
+const formatSelection = document.getElementById('select_format')
+const cardTypeSelection = [document.getElementById('check-creature'),
+                            document.getElementById('check-planeswalker'),
+                            document.getElementById('check-artifact'),
+                            document.getElementById('check-enchantment'),
+                            document.getElementById('check-battle')
+                            ]
 
 function getAddress() {
     return 'http://' + window.location.hostname
@@ -22,6 +29,13 @@ class Extra {
         this.display_name = display_name;
         this.name = name;
         this.stats = stats;
+    }
+}
+
+class RandomCardBody {
+    constructor(format, card_types) {
+        this.format = format;
+        this.type = card_types;
     }
 }
 
@@ -62,11 +76,23 @@ async function setPaperStatus() {
 }
 
 async function printRandomCard(button) {
-    let response = await fetch(getAddress() + '/api/print/random/' + button.innerText, { method: "post" });
+    let format = formatSelection.options[formatSelection.selectedIndex].text;
+    let types = [];
+    cardTypeSelection.forEach(selector => {
+        if (selector.checked == true) {
+            types.push(selector.labels[0].innerText);
+        }
+    });
+    if (types.length == 0) {
+        return; // todo show error
+    }
+
+    let body = new RandomCardBody(format, types);
+    let response = await fetch(getAddress() + '/api/print/random/' + button.innerText, { method: "post", body: JSON.stringify(body) });
     if (!response.ok) {
         const data = await response.json();
         await openError(data.message);
-        return
+        return;
     }
 
     appendHistory(await response.json());
