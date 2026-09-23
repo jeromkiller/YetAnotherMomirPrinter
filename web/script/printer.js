@@ -44,7 +44,7 @@ async function openError(error_message) {
     message_field.innerText = error_message;
 
     let myCollapse = document.getElementById('error_section');
-    let col = new bootstrap.Collapse(myCollapse);
+    let col = new bootstrap.Collapse(myCollapse, {toggle: false});
     col.show();
 }
 
@@ -84,7 +84,8 @@ async function printRandomCard(button) {
         }
     });
     if (types.length == 0) {
-        return; // todo show error
+        await openError("At least one card type needs to be selected");
+        return;
     }
 
     let body = new RandomCardBody(format, types);
