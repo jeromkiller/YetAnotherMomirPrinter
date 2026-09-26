@@ -84,18 +84,18 @@
         </div>
     </noscript>
 
-    <div class="collapse" id="error_section">
-        <div class="island shadow error">
-            <p >
-            <btn class="btn btn-close" type="button" data-bs-toggle="collapse" href="#error_section" role="button" aria-expanded="false" aria-controls="error_section"></btn>
-            <a id="error_message">Some error message here</a>
-            </p>
-        </div>
-    </div>
-
     <main>
         <div class="container">
             <div class="row">
+                <div class="col-12">
+                    <div class="collapse" id="error_section">
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <a id="error_message">Some error message here</a>
+                            <btn class="btn btn-close" type="button" data-bs-toggle="collapse" href="#error_section" role="button" aria-expanded="false" aria-controls="error_section"></btn>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-12 col-md-6 col-xl-">
                     <div class="island shadow">
                         <div class="grid">
@@ -241,7 +241,5 @@
     <script src="bootstrap/js/bootstrap.min.js" type="text/Javascript"></script>
     <script src="script/printer.js" type="text/Javascript" defer></script>
 </body>
-
-
 
 </html>
