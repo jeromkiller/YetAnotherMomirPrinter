@@ -1,0 +1,21 @@
+To make the printer available to all users on the pi I had to follow the steps in: https://stackoverflow.com/questions/59450308/how-to-fix-the-usb-core-usberror-of-thermal-printer-connected-to-raspberry-pi-us
+
+install nginx: https://pimylifeup.com/raspberry-pi-nginx/
+setup supervisor: https://dev.to/danielcristho/deploying-a-simple-flask-api-using-gunicorn-supervisor-nginx-eki
+to make the sudo commands for setting up wifi work the supervisor user some permissions will have to be changed
+I removed the default enabled site
+
+Move everything in web to var/www/html/:  "sudo cp -a web/. /var/www/html/"
+
+setup bridged network with https://pimylifeup.com/raspberry-pi-wifi-extender/
+make it auto connect so it automatically goes up when rebooted:  "sudo nmcli connection modify Hotspot connection.autoconnect yes"
+could set the network to hidden, but it isn't required: "sudo nmcli connection modify Hotspot 802-11-wireless.hidden yes"
+
+this hopefully fixes some of the connection issues: https://askubuntu.com/questions/1028578/nmcli-the-wifi-network-could-not-be-found
+
+something something ssl, try this in the future: https://medium.com/@tranduykhoa/setup-local-domain-with-self-signed-ssl-certificate-e126d65b7107
+
+Add the following to the sudoers file using visudo, at the bottom before the includedir works for me
+www-data ALL = (root) NOPASSWD: /usr/bin/nmcli
+
+todo: move, or give access to the project files so supervisor can start the project as the www-data user
