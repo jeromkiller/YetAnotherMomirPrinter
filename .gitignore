@@ -217,6 +217,9 @@ __marimo__/
 
 # Images
 *.png
+*.gif
+!Images/*.png
+!Images/*.gif
 
 # server stuff
 jquery.js

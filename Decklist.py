@@ -3,7 +3,7 @@ import pathlib
 from typing import TypeAlias
 import requests
 
-uri = "http://127.0.0.1:5000/print/named/"
+uri = "http://127.0.0.1:5000/api/print/named/"
 
 DecklistLine: TypeAlias = tuple[int, str]
 Board: TypeAlias = list[DecklistLine]
